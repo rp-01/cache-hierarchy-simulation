@@ -4,7 +4,7 @@
 #include<fstream>
 #include <sstream>
 #include <math.h>
-
+#include <bitset>
 struct CACHE{
 
         unsigned int BLOCKSIZE, // bytes
@@ -22,7 +22,19 @@ struct CACHE{
         unsigned int blockoffsetBit;
         unsigned int tagBit;
     };
-    struct BIT calcBit(int set, int blocksize);
+    struct split_address {
+        unsigned int tagValue;
+        unsigned int indexValue;
+    };
+
+    struct addressInBits{
+        unsigned int adrBits;
+        unsigned int tBits;
+        unsigned int iBits;
+    };
+    struct addressInBits addBits(unsigned int address_bits, unsigned int tag_bits, unsigned int index_bits);
+    // struct split_address extractBit(unsigned int address,unsigned int tagBit,unsigned int indexBit);
+    struct BIT calcBit(unsigned int set,unsigned int blocksize);
     int main(int argc, char *argv[]) {
     
     char *pCh;
@@ -57,11 +69,11 @@ struct CACHE{
         return 1;
     }
     
-    struct BIT l2_cache_address;
-
+    BIT l2_cache_address;
+    
     if( my_cache.L2_SIZE !=0){
         L2_cache_set = my_cache.L2_SIZE / (my_cache.L2_ASSOC* my_cache.BLOCKSIZE);
-        l2_cache_address = calcBit(L1_cache_set, my_cache.BLOCKSIZE);
+        l2_cache_address = calcBit(L2_cache_set, my_cache.BLOCKSIZE);
         if ((my_cache.BLOCKSIZE & (my_cache.BLOCKSIZE-1) != 0) && (L2_cache_set & (L2_cache_set - 1) != 0))
         {
             std::cout << "Blocksize and set value need to be power of 2 for this simulator.";
@@ -74,15 +86,20 @@ struct CACHE{
         std::cout << "Blocksize and set value need to be power of 2 for this simulator.";
         return 1;
     }
-    struct BIT l1_cache_address = calcBit(L1_cache_set, my_cache.BLOCKSIZE);
+    BIT l1_cache_address = calcBit(L1_cache_set, my_cache.BLOCKSIZE);
+    std::cout << "printing address bits" << "\n";
+    std::cout << l1_cache_address.indexBit << "\n";
+    std::cout << l1_cache_address.blockoffsetBit << "\n";
+    std::cout << l1_cache_address.tagBit << "\n";
+    std::cout << "end of address bits" << "\n";
     // End cache parameters constraint check
 
     //std::cout << "you entered: " << argc << "arguments: " << "\n";
     //for(int i = 1; i <= argc; ++i){
       //  std::cout << argv[i] << "\t";
     //}
-    std::cout << L1_cache_set << "\n";
-    std::cout << L2_cache_set << "\n";
+    //std::cout << L1_cache_set << "\n";
+    //std::cout << L2_cache_set << "\n";
 
     // start read from file //
     std::string token;
@@ -91,6 +108,12 @@ struct CACHE{
     unsigned int hexAd;
     std::fstream myfile (my_cache.trace_file);
     std::string line;
+
+    //split_address l1_decode;
+    //split_address l2_decode;
+    addressInBits l1_bits;
+    //std::string addressInBits;
+   
     if(myfile.is_open()){
         while (getline (myfile, line)){
             if(line.empty()){
@@ -105,24 +128,25 @@ struct CACHE{
             std::cout << input[0] << "\n";
             std::cout << input[1] << "\n";
             hexAd = strtoul (input[1].c_str(), 0, 16);
+            l1_bits = addBits(hexAd, l1_cache_address.tagBit,l1_cache_address.indexBit);
+            
             break;
                     
         }
         myfile.close();
-        std::cout << hexAd << "\n";
+        //std::cout << hexAd << "\n";
+        std::cout << std::hex << l1_bits.adrBits << "\n";
+        std::cout << std::hex << l1_bits.iBits << "\n";
+        std::cout << std::hex << l1_bits.tBits << "\n";
     }
-    else std::cout << "File doesn't exist.";
-     // end read from file //
-
-     // start extract tag and index bits //
-        unsigned  mask;
-    //mask = (1 << X) - 1;
-    //lastXbits = value & mask;
-     // end extract tag and index bits //
+    else{
+        std::cout << "File doesn't exist." << "\n";
+    }
+    
     return 0;
 }
 
-struct BIT calcBit(int set, int blocksize){
+struct BIT calcBit(unsigned int set,unsigned int blocksize){
         struct BIT bit;
         bit.indexBit = log2 (set);
         bit.blockoffsetBit = log2 (blocksize);
@@ -130,3 +154,32 @@ struct BIT calcBit(int set, int blocksize){
         struct BIT a = bit;
         return a;     
     }
+
+/*struct split_address extractBit(unsigned int address,unsigned int tagBit,unsigned int indexBit){
+    struct split_address a;
+    unsigned int mask;
+    mask = ((1 << tagBit) - 1) << 1;
+    a.tagValue = address & mask;
+    unsigned int indxAdd = address - a.tagValue;
+    mask = ((1 << indexBit) - 1) << 1;
+    a.indexValue = indxAdd & mask;
+     //std::cout << a.indexValue << "\n";
+    return a;
+}*/
+ struct addressInBits addBits(unsigned int address_bits,unsigned int tag_bits,unsigned int index_bits){
+     std::bitset<32> adr(address_bits);
+            addressInBits a;
+            std::string mystring = adr.to_string<char,std::string::traits_type,std::string::allocator_type>();
+            a.adrBits = adr.to_ulong();
+            
+           std::bitset<32> adrTag(mystring,0,tag_bits); 
+            
+            a.tBits = adrTag.to_ulong();
+            std::bitset<32> adrIdx(mystring, tag_bits+1, tag_bits+index_bits);
+       
+            a.iBits = adrIdx.to_ulong();
+            return a;
+            //std::cout << "tag bits: " << add2 << "\n";
+
+ }
+
