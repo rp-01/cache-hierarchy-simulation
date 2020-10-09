@@ -1,3 +1,5 @@
 *.exe
 *.txt
+other.cpp
 sim_cache
+filesize.cpp

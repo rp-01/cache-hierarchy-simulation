@@ -7,15 +7,15 @@
 #include <bitset>
 struct CACHE{
 
-        unsigned int BLOCKSIZE, // bytes
-         L1_SIZE, // bytes
-         L1_ASSOC, // 1 is direct-mapped
-         L2_SIZE, // 0 = no L2 cache
-         L2_ASSOC, // 1 is direct-mapped
-         REPLACEMENT_POLICY, // 0 = LRU, 1 = PLRU, 2 = optimal
-         INCLUSION_PROPERTY=0; // 0 = non-inclusive, 1 = inclusive
-        std::string trace_file=""; // trace file name
-    }my_cache;
+        unsigned int BLOCKSIZE = 0; // bytes
+        unsigned int L1_SIZE = 0; // bytes
+        unsigned int L1_ASSOC = 0; // 1 is direct-mapped
+        unsigned int L2_SIZE = 0; // 0 = no L2 cache
+        unsigned int L2_ASSOC = 0; // 1 is direct-mapped
+        unsigned int REPLACEMENT_POLICY = 0; // 0 = LRU, 1 = PLRU, 2 = optimal
+        unsigned int INCLUSION_PROPERTY = 0; // 0 = non-inclusive, 1 = inclusive
+        std::string trace_file = ""; // trace file name
+    };
 
     struct BIT {
         unsigned int indexBit=0;
@@ -31,31 +31,55 @@ struct CACHE{
         unsigned int adrBits=0;
         unsigned int tBits=0;
         unsigned int iBits=0;
-    };
+    }l1_bits, l2_bits;
 
     struct state {
-        unsigned int traffic = 0;
+        
         unsigned int cache_read = 0;
         unsigned int cache_write = 0;
         unsigned int cache_read_miss = 0;
         unsigned int cache_write_miss = 0;
         unsigned int cache_wirteBack = 0;
     }l1_stats,l2_stats;
-
+    unsigned int traffic = 0;
     struct CACHE_WAY{
+        std::vector<unsigned int> one_way;
+        std::vector<unsigned int> two_way;
+        std::vector<unsigned int> third_way;
+        std::vector<unsigned int> forth_way;
+    }l1_way,l2_way;
+
+    struct RPL_COUNT{
+        std::vector<unsigned int> clmn1;
+        std::vector<unsigned int> clmn2;
+        std::vector<unsigned int> clmn3;
+        std::vector<unsigned int> clmn4;
+    }l1_rpl,l2_rpl;
+    
+    // struct to save relevent dirty bits
+    struct DIRTY_BIT{
         std::vector<std::string> one_way;
         std::vector<std::string> two_way;
         std::vector<std::string> third_way;
         std::vector<std::string> forth_way;
-    };
+    }l1_dirtyBit, l2_dirty_bit;
+    struct LRU{
+        std::vector<unsigned int> one_way;
+        std::vector<unsigned int> two_way;
+        std::vector<unsigned int> third_way;
+        std::vector<unsigned int> forth_way;
+    }l1_lru, l2_lru;
     struct addressInBits addBits(unsigned int address_bits, unsigned int tag_bits, unsigned int index_bits);
     // struct split_address extractBit(unsigned int address,unsigned int tagBit,unsigned int indexBit);
     struct BIT calcBit(unsigned int set,unsigned int blocksize);
-void L1_access(std::string oprt, std::string adr, unsigned int asoc,unsigned int setNum, unsigned int rpl, unsigned int incProp, std::vector<std::string> wayOne);
+void L1_access(std::vector<std::string>adr, struct CACHE *cp, struct CACHE_WAY *l1_data, struct RPL_COUNT *s1,
+                 unsigned int setNum);
+
     int main(int argc, char *argv[]) {
     
     char *pCh;
     // start store parameters //
+    CACHE my_cache;
     unsigned int L1_cache_set, L2_cache_set;
     my_cache.BLOCKSIZE = strtoul (argv[1], &pCh, 10);
     my_cache.L1_SIZE = strtoul (argv[2], &pCh, 10);
@@ -67,112 +91,159 @@ void L1_access(std::string oprt, std::string adr, unsigned int asoc,unsigned int
     my_cache.trace_file = argv[8];
     // end store parameters //
 
-    // START find #set, tag bits, index bits, blockoffset //
     
-    L1_cache_set = my_cache.L1_SIZE / (my_cache.L1_ASSOC* my_cache.BLOCKSIZE);
-    CACHE_WAY l1_cache_content = createCache(my_cache.L1_ASSOC, L1_cache_set);
-
-    //unsigned int indexBit = log2 (L1_cache_set);
-    //unsigned int blockoffsetBit = log2(my_cache.BLOCKSIZE);
-    //unsigned int tagBit = 32 - indexBit - blockoffsetBit;
-    
-    // END find #set, tag bits, index bits, blockoffset //
-    
-    // start check cacahe parameter consraints //
     if(my_cache.L1_ASSOC == 0){
-        std::cout << "Minimum associativity value for L1 cache: 1, entered value: " << my_cache.L1_ASSOC << "\n";
+        std::cout << "Minimum associativity value for L1 cache: 1, entered value: " << my_cache.L1_ASSOC << std::endl;
         return 1;
     }
     if(my_cache.L2_SIZE != 0 && my_cache.L2_ASSOC == 0){
-        std::cout << "Minimum associativity value for L2 cache: 1, entered value: " << my_cache.L1_ASSOC << "\n";
+        std::cout << "Minimum associativity value for L2 cache: 1, entered value: " << my_cache.L1_ASSOC << std::endl;
         return 1;
     }
-    
+
+    // START find #set, tag bits, index bits, blockoffset //
+    L1_cache_set = my_cache.L1_SIZE / (my_cache.L1_ASSOC * my_cache.BLOCKSIZE);
+
     BIT l2_cache_address;
     CACHE_WAY l2_cache_content;
     if( my_cache.L2_SIZE !=0){
         L2_cache_set = my_cache.L2_SIZE / (my_cache.L2_ASSOC* my_cache.BLOCKSIZE);
-        l2_cache_content = createCache(my_cache.L1_ASSOC, L1_cache_set);
+       // l2_cache_content = createCache(my_cache.L1_ASSOC, L1_cache_set);
         l2_cache_address = calcBit(L2_cache_set, my_cache.BLOCKSIZE);
         if ((my_cache.BLOCKSIZE & (my_cache.BLOCKSIZE-1) != 0) && (L2_cache_set & (L2_cache_set - 1) != 0))
         {
-            std::cout << "Blocksize and set value need to be power of 2 for this simulator.";
+            std::cout << "Blocksize and set value need to be power of 2 for this simulator." << std::endl;
             return 1; 
         }
            
     }
     
     if ((my_cache.BLOCKSIZE & (my_cache.BLOCKSIZE-1) != 0) && (L1_cache_set & (L1_cache_set - 1) != 0)){
-        std::cout << "Blocksize and set value need to be power of 2 for this simulator.";
+        std::cout << "Blocksize and set value need to be power of 2 for this simulator." << std::endl;
         return 1;
     }
     BIT l1_cache_address = calcBit(L1_cache_set, my_cache.BLOCKSIZE);
-    std::cout << "printing address bits" << "\n";
-    std::cout << "index bits: " << l1_cache_address.indexBit << "\n";
-    std::cout << "blockoffseet bits: " << l1_cache_address.blockoffsetBit << "\n";
-    std::cout << "tag bits: " << l1_cache_address.tagBit << "\n";
-    std::cout << "end of address bits" << "\n";
+    std::cout << "printing address bits" << std::endl;
+    std::cout << "index bits: " << l1_cache_address.indexBit << std::endl;
+    std::cout << "blockoffseet bits: " << l1_cache_address.blockoffsetBit << std::endl;
+    std::cout << "tag bits: " << l1_cache_address.tagBit << std::endl;
+    std::cout << "end of address bits" << std::endl;
     // End cache parameters constraint check
 
-    //std::cout << "you entered: " << argc << "arguments: " << "\n";
-    //for(int i = 1; i <= argc; ++i){
-      //  std::cout << argv[i] << "\t";
-    //}
-    //std::cout << L1_cache_set << "\n";
-    //std::cout << L2_cache_set << "\n";
+    // Resize vector according to set size
+    l1_way.one_way.resize(L1_cache_set, 0);
+    l1_way.two_way.resize(L1_cache_set, 0);
+    l1_way.third_way.resize(L1_cache_set, 0);
+    l1_way.forth_way.resize(L1_cache_set, 0);
 
+    // resize vector for locality ref
+    l1_rpl.clmn1.resize(L1_cache_set, 0);
+    l1_rpl.clmn2.resize(L1_cache_set, 0);
+    l1_rpl.clmn3.resize(L1_cache_set, 0);
+    l1_rpl.clmn4.resize(L1_cache_set, 0);
+
+    l1_lru.one_way.resize(L1_cache_set, 0);
+    l1_lru.one_way.resize(L1_cache_set, 0);
+    l1_lru.one_way.resize(L1_cache_set, 0);
+    l1_lru.one_way.resize(L1_cache_set, 0);
+
+   
+    if(my_cache.L2_SIZE != 0){
+        l2_way.one_way.resize(L2_cache_set, 0);
+        l2_way.two_way.resize(L2_cache_set, 0);
+        l2_way.third_way.resize(L2_cache_set, 0);
+        l2_way.forth_way.resize(L2_cache_set, 0);
+
+        l2_rpl.clmn1.resize(L2_cache_set, 0);
+        l2_rpl.clmn2.resize(L2_cache_set, 0);
+        l2_rpl.clmn3.resize(L2_cache_set, 0);
+        l2_rpl.clmn4.resize(L2_cache_set, 0);
+
+        l2_lru.one_way.resize(L2_cache_set, 0);
+        l2_lru.one_way.resize(L2_cache_set, 0);
+        l2_lru.one_way.resize(L2_cache_set, 0);
+        l2_lru.one_way.resize(L2_cache_set, 0);
+        }
     // start read from file //
     std::string token="";
-    char address[8];
     std::vector<std::string> input;
     unsigned int hexAd=0;
     std::fstream myfile (my_cache.trace_file);
     std::string line="";
-
-    //split_address l1_decode;
-    //split_address l2_decode;
-    addressInBits l1_bits;
-    //std::string addressInBits;
+    
+    std::vector<std::string> fileContent;
    unsigned int fileLen=1;
     if(myfile.is_open()){
+
         while (getline (myfile, line)){
             
             if(line.empty()){
                 continue;
             }
-            std::cout << line << "\n";
-            std::istringstream stm(line);
-            input.clear();
-            while(stm >> token){
-                input.push_back(token);
-            }
+            fileContent.push_back(line);
+            //std::cout << line << std::endl;
+            //std::istringstream stm(line);
+            //input.clear();
+            //while(stm >> token){
+            //    input.push_back(token);
+            //}
             
-            std::cout << input[0] << "\n";
-            std::cout << input[1] << "\n";
-            hexAd = strtoul (input[1].c_str(), 0, 16);
-            l1_bits = addBits(hexAd, l1_cache_address.tagBit,l1_cache_address.indexBit);
-           // L1_access(input[0],input[1], my_cache.L1_ASSOC,my_cache.REPLACEMENT_POLICY, my_cache.INCLUSION_PROPERTY);
-            std::cout << std::hex << "address: "<< l1_bits.adrBits << "\n";
-            std::cout << std::hex << "tag: " << l1_bits.tBits << "\n";
-            std::cout << std::dec << "index: " << l1_bits.iBits << "\n";
-            fileLen++;
+            //std::cout << input[0] << std::endl;
+            //std::cout << input[1] << std::endl;
+            //hexAd = strtoul (input[1].c_str(), 0, 16);
+            //l1_bits = addBits(hexAd, l1_cache_address.tagBit,l1_cache_address.indexBit);
+            
+            //L1_access(input, &my_cache, &l1_way, l1_cache_address.indexBit,L1_cache_set);
+            
+            //std::cout << std::hex << "address: "<< l1_bits.adrBits << std::endl;
+            //std::cout << std::hex << "tag: " << l1_bits.tBits << std::endl;
+            //std::cout << std::dec << "index: " << l1_bits.iBits << std::endl;
+            //fileLen++;
             
                     
         }
-        std::cout << "# lines in file: " << fileLen << "\n";
-        std::cout << "size of cach1 " << sizeof(l1_cache_content) << "\n";
-        std::cout << "size of cach2" << sizeof(l2_cache_content) << "\n";
+        //std::cout << "# lines in file: " << fileLen << std::endl;
+        //std::cout << "size of cach1 " << sizeof(l1_cache_content) << std::endl;
+        //std::cout << "size of cach2" << sizeof(l2_cache_content) << std::endl;
         myfile.close();
-        //std::cout << hexAd << "\n";
-        //std::cout << std::hex << l1_bits.adrBits << "\n";
-        //std::cout << std::hex << l1_bits.iBits << "\n";
-        //std::cout << std::hex << l1_bits.tBits << "\n";
     }
     else{
-        std::cout << "File doesn't exist." << "\n";
+        std::cout << "File doesn't exist." << std::endl;
     }
-    
-    return 0;
+    for(int i = 0; i<fileContent.size(); i++){
+        std::istringstream stm(fileContent[i]);
+        input.clear();
+        while(stm >> token){
+            input.push_back(token);
+            }
+        std::cout << input[0] << std::endl;
+        std::cout << input[1] << std::endl;
+
+        hexAd = strtoul (input[1].c_str(), 0, 16);
+
+        //calculate tag address & index address
+        l1_bits = addBits(hexAd, l1_cache_address.tagBit,l1_cache_address.indexBit);
+        
+        //access cache
+        
+            
+        std::cout << std::hex << "address: "<< l1_bits.adrBits << std::endl;
+        std::cout << std::hex << "tag: " << l1_bits.tBits << std::endl;
+        std::cout << std::dec << "index: " << l1_bits.iBits << std::endl;
+        std::cout << std::hex << l1_way.one_way[l1_cache_address.indexBit] << std::endl;
+        L1_access(input, &my_cache, &l1_way, &l1_rpl, L1_cache_set);
+        std::cout << std::hex << "l1 cache content at: " << l1_bits.iBits << "\t"
+        << l1_way.one_way[l1_bits.iBits] << std::endl;
+        if(i == 12){
+            break;
+        }
+    }
+    std::cout << "L1 cache read miss: " << l1_stats.cache_read_miss << std::endl;
+    std::cout << "L2 cache read: " << l1_stats.cache_read << std::endl;
+    std::cout << "L1 cache writes: " << l1_stats.cache_write << std::endl;
+    std::cout << "L1 cache write miss: " << l1_stats.cache_write_miss << std::endl;
+
+     return 0;
 }
 
 struct BIT calcBit(unsigned int set,unsigned int blocksize){
@@ -192,7 +263,7 @@ struct BIT calcBit(unsigned int set,unsigned int blocksize){
     unsigned int indxAdd = address - a.tagValue;
     mask = ((1 << indexBit) - 1) << 1;
     a.indexValue = indxAdd & mask;
-     //std::cout << a.indexValue << "\n";
+     //std::cout << a.indexValue << std::endl;
     return a;
 }*/
  struct addressInBits addBits(unsigned int address_bits,unsigned int tag_bits,unsigned int index_bits){
@@ -201,61 +272,101 @@ struct BIT calcBit(unsigned int set,unsigned int blocksize){
     std::bitset<32> adr(address_bits);
     std::string mystring = adr.to_string<char,std::string::traits_type,std::string::allocator_type>();
     a.adrBits = adr.to_ulong();
-    std::cout << "address: " << adr << "\n";
-    //std::cout << std::hex << "address in hex: " << a.adrBits << "\n";
+    //std::cout << "address: " << adr << std::endl;
+    //std::cout << std::hex << "address in hex: " << a.adrBits << std::endl;
 
     std::bitset<32> adrTag(mystring,0,tag_bits); 
-    std::cout << "tag: " << adrTag << "\n";
+    //std::cout << "tag: " << adrTag << std::endl;
     a.tBits = adrTag.to_ulong();
-    //std::cout << std::hex << "tag in hex: " << a.tBits << "\n";a
+    //std::cout << std::hex << "tag in hex: " << a.tBits << std::endl;a
     
     std::bitset<32> adrIdx(mystring,22,6);
-    std::cout << "idx: " << adrIdx << "\n";
+    //std::cout << "idx: " << adrIdx << std::endl;
     a.iBits = adrIdx.to_ulong();
-    //std::cout << std::hex << "idx in hex: " << a.iBits << "\n";
+    //std::cout << std::hex << "idx in hex: " << a.iBits << std::endl;
     return a;
-    //std::cout << "tag bits: " << add2 << "\n";
+    //std::cout << "tag bits: " << add2 << std::endl;
 
  }
 
-/*struct CACHE_WAY createCache(unsigned int asoc, unsigned int set){
-    CACHE_WAY content;
-    if (asoc==1){
-        
-        content.one_way;
 
-    }
-    else if(asoc == 2){
+void L1_access(std::vector<std::string>adr, struct CACHE *cp, struct CACHE_WAY *l1_data, struct RPL_COUNT *s1, unsigned int setNum){
+    
+    if(adr[0] == "r"){
         
-        content.one_way;
-        content.two_way;
-    }
-     else if(asoc == 2){
-         
-        content.one_way;
-        content.two_way;
-        content.third_way;
-        content.forth_way;
-    }
-    return content;
-}
-*/
+        if(l1_data->one_way[l1_bits.iBits] == 0){
+            
+            l1_data->one_way[l1_bits.iBits] = l1_bits.tBits;
+            l1_stats.cache_read_miss++;
+            // moidfy lru counter
+             if(cp->REPLACEMENT_POLICY == 0){
+                l1_lru.one_way[l1_bits.iBits] += 1;
+                }
+            // access l2 cache function
+            
+        }
 
-void L1_access(std::string oprt, std::string adr, unsigned int asoc,unsigned int setNum, unsigned int rpl, unsigned int incProp, std::vector<std::string> wayOne){
-    int i = 0;
-    while (i < setNum){
-        if(adr == wayOne[i]){
-            if(oprt == "r"){
-                l1_stats.cache_read++;
-                
-            }
-            else if(oprt == "w"){
-                l1_stats.cache_write++;
-            }
+        else if(l1_bits.tBits == l1_data->one_way[l1_bits.iBits]){
+            l1_stats.cache_read++;
+            // moidfy lru counter
+            if(cp->REPLACEMENT_POLICY == 0){
+                l1_lru.one_way[l1_bits.iBits] += 1;
+                }
+        }
+        else if(l1_bits.tBits != l1_data->one_way[l1_bits.iBits] && l1_dirtyBit.one_way[l1_bits.iBits] == "D"){
+
+            l1_stats.cache_read_miss++;
+            // call l2 cache
+            //also perform replacement policy
+            // inclusion property function
+            //if dirty bit writeback
         }
     }
+    else if(adr[0] == "w"){
+        if(l1_data->one_way[l1_bits.iBits] == 0){
+            l1_stats.cache_write_miss++;
+            l1_data->one_way[l1_bits.iBits] = l1_bits.tBits;
+            
+            // moidfy lru counter
+            if(cp->REPLACEMENT_POLICY == 0){
+                l1_lru.one_way[l1_bits.iBits] += 1;
+            }
+        }
+        else if (l1_data->one_way[l1_bits.iBits] == l1_bits.tBits){
+            l1_dirtyBit.one_way[l1_bits.iBits] = "D";
+
+            // moidfy lru counter
+            if(cp->REPLACEMENT_POLICY == 0){
+                l1_lru.one_way[l1_bits.iBits] += 1;
+            }
+
+        }
+        else if(l1_data->one_way[l1_bits.iBits] != l1_bits.tBits && cp->INCLUSION_PROPERTY == 0){
+            if(l1_dirtyBit.one_way[l1_bits.iBits] != "D"){
+                if(cp->REPLACEMENT_POLICY == 0){
+                     l1_data->one_way[l1_bits.iBits] = l1_bits.tBits;
+                }
+
+                if(cp->REPLACEMENT_POLICY == 1){
+                     // PLRU
+                }
+
+                else if(cp->REPLACEMENT_POLICY == 2){
+                     //OPTIMAL
+                }
+            }
+
+            else if(l1_dirtyBit.one_way[l1_bits.iBits] == "D"){
+                // compare lru vectors and replace vector element with least value
+                // also adjust vector lru count with same vector[i]
+            }
+
+        }
+        
 
     }
+        
+}
 
 /*
 0100000000000001001101 1000001100
