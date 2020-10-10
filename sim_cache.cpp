@@ -40,9 +40,9 @@ struct CACHE{
         unsigned int cache_write = 0;
         unsigned int cache_read_miss = 0;
         unsigned int cache_write_miss = 0;
-        unsigned int cache_wirteBack = 0;
+        unsigned int cache_write_back = 0;
     }l1_stats,l2_stats;
-    unsigned int traffic = 0;
+    unsigned int traffic = 0; // track main mem access
     struct CACHE_WAY{
         std::vector<unsigned int> one_way;
         std::vector<unsigned int> two_way;
@@ -70,7 +70,7 @@ struct CACHE{
         std::vector<std::string> two_way;
         std::vector<std::string> third_way;
         std::vector<std::string> forth_way;
-    }l1_dirtyBit, l2_dirty_bit;
+    }l1_dirty_bit, l2_dirty_bit;
     struct LRU{
         std::vector<unsigned int> one_way;
         std::vector<unsigned int> two_way;
@@ -152,6 +152,11 @@ struct CACHE{
     l1_way.third_way.resize(L1_cache_set, 0);
     l1_way.forth_way.resize(L1_cache_set, 0);
     
+    l1_dirty_bit.one_way.resize(L1_cache_set, " ");
+    l1_dirty_bit.two_way.resize(L1_cache_set, " ");
+    l1_dirty_bit.third_way.resize(L1_cache_set, " ");
+    l1_dirty_bit.forth_way.resize(L1_cache_set, " ");
+
     l1_lru.one_way.resize(L1_cache_set, 0);
     l1_lru.one_way.resize(L1_cache_set, 0);
     l1_lru.one_way.resize(L1_cache_set, 0);
@@ -178,6 +183,12 @@ struct CACHE{
         l1_vld.clmn2.resize(L1_cache_set, "0");
         l1_vld.clmn3.resize(L1_cache_set, "0");
         l1_vld.clmn4.resize(L1_cache_set, "0");
+
+        l2_dirty_bit.one_way.resize(L2_cache_set, " ");
+        l2_dirty_bit.two_way.resize(L2_cache_set, " ");
+        l2_dirty_bit.third_way.resize(L2_cache_set, " ");
+        l2_dirty_bit.forth_way.resize(L2_cache_set, " ");
+
         }
     // end resize vector according to set size
 
@@ -207,14 +218,16 @@ struct CACHE{
     // end get file data //
 
     // start cache access process //
+    std::cout << std::dec << "file size: " << fileContent.size() << std::endl;
     for(int i = 0; i<fileContent.size(); i++){
+        //std::cout<< std::dec << "fetching address at line # " << i << std::endl; 
         std::istringstream stm(fileContent[i]);
         input.clear();
         while(stm >> token){
             input.push_back(token);
             }
-        std::cout << input[0] << std::endl;
-        std::cout << input[1] << std::endl;
+        //std::cout << input[0] << std::endl;
+        //std::cout << input[1] << std::endl;
 
         hexAd = strtoul (input[1].c_str(), 0, 16);
 
@@ -222,25 +235,31 @@ struct CACHE{
         l1_field = addBits(hexAd, l1_bits.tagBit,l1_bits.indexBit);
         if(my_cache.L2_SIZE != 0){
             l2_field = addBits(hexAd, l2_bits.tagBit,l2_bits.indexBit);
-        }        
-        std::cout << std::hex << "address: "<< l1_field.adrBits << std::endl;
-        std::cout << std::hex << "tag: " << l1_field.tBits << std::endl;
-        std::cout << std::dec << "index: " << l1_field.iBits << std::endl;
-        std::cout << std::hex << l1_way.one_way[l1_bits.indexBit] << std::endl;
+        }
+        //std::cout << std::dec << " address line # " << i << std::endl;        
+        //std::cout << std::hex << "address: "<< l1_field.adrBits << std::endl;
+        //std::cout << std::hex << "tag: " << l1_field.tBits << std::endl;
+        //std::cout << std::dec << "index: " << l1_field.iBits << std::endl;
+        
         
         L1_access(input, &my_cache, L1_cache_set);
-        std::cout << std::dec << "l1 cache content at: " << l1_field.iBits << "\t"
-        << l1_way.one_way[l1_field.iBits] << std::endl;
-        if(i == 12){
+        //std::cout << std::dec << "l1 cache content at: " << l1_field.iBits << "\t" << l1_way.one_way[l1_field.iBits] << std::endl;
+        /*if(i == 12){
             break;
-        }
+        }*/
     }
     // end cache access process //
+    std::cout << "===== L1 contents =====" << std::endl;
+    for(int i = 0; i<l1_way.one_way.size();i++){
+        std::cout << std::dec << "Set\t" << i+1 << ":\t";
+        std::cout << std::hex << l1_way.one_way[i] << "\t" << l1_dirty_bit.one_way[i] << std::endl; 
+    }
+    std::cout << std::dec << "===== Simulation results (raw) =====" << std::endl;
+    std::cout << std::dec << "a." << "L1 cache read miss: " << l1_stats.cache_read_miss << std::endl;
+    std::cout << std::dec << "b." << "L2 cache read: " << l1_stats.cache_read << std::endl;
+    std::cout << std::dec << "c." << "L1 cache writes: " << l1_stats.cache_write << std::endl;
+    std::cout << std::dec << "c." << "L1 cache write miss: " << l1_stats.cache_write_miss << std::endl;
     
-    std::cout << "L1 cache read miss: " << l1_stats.cache_read_miss << std::endl;
-    std::cout << "L2 cache read: " << l1_stats.cache_read << std::endl;
-    std::cout << "L1 cache writes: " << l1_stats.cache_write << std::endl;
-    std::cout << "L1 cache write miss: " << l1_stats.cache_write_miss << std::endl;
   
      return 0;
 }
@@ -331,7 +350,7 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
 
                         if(l2_dirty_bit.one_way[l2_field.iBits] == "D"){
-                            l2_stats.cache_wirteBack++;
+                            l2_stats.cache_write_back++;
                         }
                     }
                 }
@@ -340,6 +359,9 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
 
         // HIT CASE
         else if(l1_field.tBits == l1_way.one_way[l1_field.iBits] ){
+            //std::cout << std::dec << "***cache read hit***" << std::endl;
+            //std::cout << std::hex << "****" << l1_way.one_way[l1_field.iBits] << "****" << std::endl;
+            //std::cout << std::hex << "****" << l1_field.tBits << "****" << std::endl;
             l1_stats.cache_read++;
             // moidfy lru counter
             if(cp->REPLACEMENT_POLICY == 0 ){
@@ -349,8 +371,8 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
 
         // MISS CASE
         else if(l1_field.tBits != l1_way.one_way[l1_field.iBits]){
-            if(l1_dirtyBit.one_way[l1_field.iBits] == "D"){
-                l1_stats.cache_wirteBack++;
+            if(l1_dirty_bit.one_way[l1_field.iBits] == "D"){
+                l1_stats.cache_write_back++;
             }
             l1_stats.cache_read_miss++;
             
@@ -379,34 +401,10 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
                         l2_lru.one_way[l2_field.iBits] += 1;
                     }
                 }
-                /*
-                else if(l2_field.tBits != l2_way.one_way[l2_field.iBits] && l2_dirtyBit.one_way[l2_field.iBits] != "D"){
-                    l2_stats.cache_read_miss++;
-                    traffic++;
-                    if(cp->INCLUSION_PROPERTY == 0){
-                        l1_way.one_way[l1_field.iBits] = l1_field.iBits;
-                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        
-                    }
-                    else if(cp->INCLUSION_PROPERTY == 1){
-                        for(int i = 0; i<l1_way.one_way.size; i++){
-                            if(l1_way.one_way[i] == l2_ref.one_way[l2_field.iBits]){
-                                ref = i;
-                                l1_vld.clmn1[i] = "invalid";
-                                break;
-                            }
-                        }
-                        
-                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        if(cp->REPLACEMENT_POLICY == 0){
-                        l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-                        }
-                    }
-                }
-                */
+
                 else if(l2_field.tBits != l2_way.one_way[l2_field.iBits]){
                     if(l2_dirty_bit.one_way[l2_field.iBits] == "D"){
-                        l2_stats.cache_wirteBack++;
+                        l2_stats.cache_write_back++;
                     }
                     l2_stats.cache_read_miss++;
                     
@@ -436,35 +434,106 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
 
             }
         }
-        /*
-        // l1 miss and tag is not dirty
-        else if(l1_field.tBits != l1_way.one_way[l1_field.iBits] && l1_dirtyBit.one_way[l1_field.iBits] != "D"){
-            
-            l1_stats.cache_read_miss++;
-            
-            if(cp->L2_SIZE !=0){
-                if(l2_way.one_way[l2_field.iBits] == 0){
 
+    }
+
+    // WRTIE OPERATION
+    else if(adr[0] == "w"){
+        // EMPTY or INVALID CASE
+        if(l1_way.one_way[l1_field.iBits] == 0){
+            if(cp->INCLUSION_PROPERTY == 0){
+            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+            l1_stats.cache_write_miss++;
+            // moidfy lru counter
+             if(cp->REPLACEMENT_POLICY == 0){
+                l1_lru.one_way[l1_field.iBits] += 1;
+                }
+            }
+            else if(cp->INCLUSION_PROPERTY == 1){
+                if(cp->L2_SIZE == 0){
+
+                    l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write_miss++;
+                    // moidfy lru counter
+                    if(cp->REPLACEMENT_POLICY == 0){
+                        l1_lru.one_way[l1_field.iBits] += 1;
+                    }
+                }
+
+                else if(cp->L2_SIZE != 0){
+                    if(l2_way.one_way[l2_field.iBits] == 0){
+                        traffic++;
+                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
+                        l2_ref.one_way[l2_field.iBits] = l1_field.tBits; // save corresponding l1 tag to use when setting invalid to l1 tag.
+                        l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    }
+                    else if(l2_way.one_way[l2_field.iBits] != 0){
+                        traffic++;
+                        l2_stats.cache_write_miss++;
+                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
+                        l2_ref.one_way[l2_field.iBits] = l1_field.tBits; // save corresponding l1 tag to use when setting invalid to l1 tag.
+                        l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+
+                        if(l2_dirty_bit.one_way[l2_field.iBits] == "D"){
+                            l2_stats.cache_write_back++;
+                        }
+                    }
+                }
+            }  
+        }
+
+        // HIT CASE
+        else if(l1_field.tBits == l1_way.one_way[l1_field.iBits] ){
+            //std::cout << std::dec << "***cache write hit***" << std::endl; 
+            l1_stats.cache_write++;
+            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+            // moidfy lru counter
+            if(cp->REPLACEMENT_POLICY == 0 ){
+                l1_lru.one_way[l1_field.iBits]++;
+                }
+        }
+
+        // MISS CASE
+        else if(l1_field.tBits != l1_way.one_way[l1_field.iBits]){
+            if(l1_dirty_bit.one_way[l1_field.iBits] == "D"){
+                l1_stats.cache_write_back++;
+            }
+            l1_stats.cache_write_miss++;
+            
+            traffic++; //traffic because writeback
+            if (cp->L2_SIZE == 0){
+                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+            }
+            else if(cp->L2_SIZE !=0){
+                if(l2_way.one_way[l2_field.iBits] == 0){
+                    l2_stats.cache_write_miss++;
                     l2_way.one_way[l2_field.iBits] = l2_field.tBits;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-                    l2_stats.cache_read_miss++;
-                    traffic++;
+                    traffic++; //traffic because read
             // moidfy lru counter
                     if(cp->REPLACEMENT_POLICY == 0){
                         l2_lru.one_way[l2_field.iBits] += 1;
+                        l1_lru.one_way[l1_field.iBits] += 1;
                     }
                 }
 
                 else if(l2_field.tBits == l2_way.one_way[l2_field.iBits]){
-                    l2_stats.cache_read++;
+                    
+                    l2_dirty_bit.one_way[l2_field.iBits] = "D";
+                    l2_stats.cache_write++;
                     // moidfy lru counter
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     if(cp->REPLACEMENT_POLICY == 0 ){
                         l2_lru.one_way[l2_field.iBits] += 1;
                     }
                 }
-                else if(l2_field.tBits != l2_way.one_way[l2_field.iBits] && l2_dirtyBit.one_way[l2_field.iBits] != "D"){
-                    l2_stats.cache_read_miss++;
+
+                else if(l2_field.tBits != l2_way.one_way[l2_field.iBits]){
+                    if(l2_dirty_bit.one_way[l2_field.iBits] == "D"){
+                        l2_stats.cache_write_back++;
+                    }
+                    l2_stats.cache_write_miss++;
+                    
                     traffic++;
                     if(cp->INCLUSION_PROPERTY == 0){
                         l1_way.one_way[l1_field.iBits] = l1_field.iBits;
@@ -472,103 +541,32 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
                         
                     }
                     else if(cp->INCLUSION_PROPERTY == 1){
-                        
-                        for(int i =0; i<l1_way.one_way.size(); i++){
-                            if(l1_way.one_way[i] == l2_way.one_way[l2_field.iBits]){
+                        for(int i = 0; i < l1_way.one_way.size(); i++){
+                            if(l1_way.one_way[i] == l2_ref.one_way[l2_field.iBits]){
+                                ref = i;
                                 l1_vld.clmn1[i] = "invalid";
+                                l1_way.one_way[i] = 0;
+                                std::cout << "inside this one****" << std::endl;
+                                break;
                             }
-                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        l1_way.one_way[l1_field.iBits] = l1_field.iBits;
                         }
-                    }
-                }
-                else if(l2_field.tBits != l2_way.one_way[l2_field.iBits] && l2_dirtyBit.one_way[l2_field.iBits] == "D"){
-                    l2_stats.cache_read_miss++;
-                    traffic++;
-                    l2_stats.cache_writeBack++;
-                    if(cp->INCLUSION_PROPERTY == 0){
-                        l1_way.one_way[l1_field.iBits] = l1_field.iBits;
+                        
                         l2_way.one_way[l2_field.iBits] = l2_field.tBits;
+                        l2_ref.one_way[l2_field.iBits] = l2_field.tBits; // saving l1 tag to use when setting invalid...
+                        l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         
                     }
-                    else if(cp->INCLUSION_PROPERTY == 1){
-                        
-                        for(int i =0; i<l1_way.one_way.size(); i++){
-                            if(l1_way.one_way[i] == l2_way.one_way[l2_field.iBits]){
-                                l1_vld.clmn1[i] = "invalid";
-                            }
-                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        l1_way.one_way[l1_field.iBits] = l1_field.iBits;
-                        }
-                    }
                 }
         
 
             }
-            else if (cp->L2_SIZE == 0){
-                traffic++;
-                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-            
-            }
-        
         }
-        */  
-    }
-
-    // operation write //
-    else if(adr[0] == "ww"){
-        
-        if(l1_way.one_way[l1_field.iBits] == 0){
-            l1_stats.cache_write_miss++;
-            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-            
-            // moidfy lru counter
-            if(cp->REPLACEMENT_POLICY == 0){
-               l1_lru.one_way[l1_field.iBits] += 1;
-            }
-        }
-        else if (l1_way.one_way[l1_field.iBits] == l1_field.tBits){
-            l1_dirtyBit.one_way[l1_field.iBits] = "D";
-
-            // moidfy lru counter
-            if(cp->REPLACEMENT_POLICY == 0){
-                l1_lru.one_way[l1_field.iBits] += 1;
-            }
-
-        }
-        else if(l1_way.one_way[l1_field.iBits] != l1_field.tBits && cp->INCLUSION_PROPERTY == 0 /*non-inclusive*/){
-            if(l1_dirtyBit.one_way[l1_field.iBits] != "D"){
-                if(cp->REPLACEMENT_POLICY == 0){
-                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-                }
-
-                if(cp->REPLACEMENT_POLICY == 1){
-                     // PLRU
-                }
-
-                else if(cp->REPLACEMENT_POLICY == 2){
-                     //OPTIMAL
-                }
-            }
-
-            else if(l1_dirtyBit.one_way[l1_field.iBits] == "D"){
-                // compare lru vectors and replace vector element with least value
-                // also adjust vector lru count with same vector[i]
-            }
-
-        }
-        
 
     }
         
 }
 
 /*
-0100000000000001001101 1000001100
-0100000000000001001101 1000001100
-00000000000100000000000001001101
-00000000000100000000000001001101
-00000000001000000000000010011011
-
-10111 0100
+100000000000000101110
+100000000000000101110
 */
