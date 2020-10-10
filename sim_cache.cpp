@@ -151,11 +151,6 @@ struct CACHE{
     l1_way.two_way.resize(L1_cache_set, 0);
     l1_way.third_way.resize(L1_cache_set, 0);
     l1_way.forth_way.resize(L1_cache_set, 0);
-
-    l1_vld.clmn1.resize(L1_cache_set, 0);
-    l1_vld.clmn2.resize(L1_cache_set, 0);
-    l1_vld.clmn3.resize(L1_cache_set, 0);
-    l1_vld.clmn4.resize(L1_cache_set, 0);
     
     l1_lru.one_way.resize(L1_cache_set, 0);
     l1_lru.one_way.resize(L1_cache_set, 0);
@@ -174,16 +169,15 @@ struct CACHE{
         l2_lru.one_way.resize(L2_cache_set, 0);
         l2_lru.one_way.resize(L2_cache_set, 0);
 
-        l2_vld.clmn1.resize(L2_cache_set, 0);
-        l2_vld.clmn2.resize(L2_cache_set, 0);
-        l2_vld.clmn3.resize(L2_cache_set, 0);
-        l2_vld.clmn4.resize(L2_cache_set, 0);
-
         l2_ref.one_way.resize(L2_cache_set, 0);
         l2_ref.one_way.resize(L2_cache_set, 0);
         l2_ref.one_way.resize(L2_cache_set, 0);
         l2_ref.one_way.resize(L2_cache_set, 0);
         
+         l1_vld.clmn1.resize(L1_cache_set, "0");
+        l1_vld.clmn2.resize(L1_cache_set, "0");
+        l1_vld.clmn3.resize(L1_cache_set, "0");
+        l1_vld.clmn4.resize(L1_cache_set, "0");
         }
     // end resize vector according to set size
 
@@ -235,7 +229,7 @@ struct CACHE{
         std::cout << std::hex << l1_way.one_way[l1_bits.indexBit] << std::endl;
         
         L1_access(input, &my_cache, L1_cache_set);
-        std::cout << std::hex << "l1 cache content at: " << l1_field.iBits << "\t"
+        std::cout << std::dec << "l1 cache content at: " << l1_field.iBits << "\t"
         << l1_way.one_way[l1_field.iBits] << std::endl;
         if(i == 12){
             break;
@@ -279,20 +273,19 @@ struct BIT calcBit(unsigned int set,unsigned int blocksize){
     std::bitset<32> adr(address_bits);
     std::string mystring = adr.to_string<char,std::string::traits_type,std::string::allocator_type>();
     a.adrBits = adr.to_ulong();
-    //std::cout << "address: " << adr << std::endl;
-    //std::cout << std::hex << "address in hex: " << a.adrBits << std::endl;
+
 
     std::bitset<32> adrTag(mystring,0,tag_bits); 
-    //std::cout << "tag: " << adrTag << std::endl;
+ 
     a.tBits = adrTag.to_ulong();
-    //std::cout << std::hex << "tag in hex: " << a.tBits << std::endl;a
+    
     
     std::bitset<32> adrIdx(mystring,22,6);
-    //std::cout << "idx: " << adrIdx << std::endl;
+    
     a.iBits = adrIdx.to_ulong();
-    //std::cout << std::hex << "idx in hex: " << a.iBits << std::endl;
+
     return a;
-    //std::cout << "tag bits: " << add2 << std::endl;
+  
 
  }
 
@@ -302,18 +295,50 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
      int ref = 0;
     if(adr[0] == "r"){
         
+
+        // EMPTY or INVALID CASE
         if(l1_way.one_way[l1_field.iBits] == 0){
-            
+            if(cp->INCLUSION_PROPERTY == 0){
             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
             l1_stats.cache_read_miss++;
             // moidfy lru counter
              if(cp->REPLACEMENT_POLICY == 0){
                 l1_lru.one_way[l1_field.iBits] += 1;
                 }
+            }
+            else if(cp->INCLUSION_PROPERTY == 1){
+                if(cp->L2_SIZE == 0){
+                    l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read_miss++;
+                    // moidfy lru counter
+                    if(cp->REPLACEMENT_POLICY == 0){
+                        l1_lru.one_way[l1_field.iBits] += 1;
+                    }
+                }
 
-            // copy paste l2 access conditions from if wqual to D conditionals  
+                else if(cp->L2_SIZE != 0){
+                    if(l2_way.one_way[l2_field.iBits] == 0){
+                        traffic++;
+                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
+                        l2_ref.one_way[l2_field.iBits] = l1_field.tBits; // save corresponding l1 tag to use when setting invalid to l1 tag.
+                        l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    }
+                    else if(l2_way.one_way[l2_field.iBits] != 0){
+                        traffic++;
+                        l2_stats.cache_read_miss++;
+                        l2_way.one_way[l2_field.iBits] = l2_field.tBits;
+                        l2_ref.one_way[l2_field.iBits] = l1_field.tBits; // save corresponding l1 tag to use when setting invalid to l1 tag.
+                        l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+
+                        if(l2_dirty_bit.one_way[l2_field.iBits] == "D"){
+                            l2_stats.cache_wirteBack++;
+                        }
+                    }
+                }
+            }  
         }
 
+        // HIT CASE
         else if(l1_field.tBits == l1_way.one_way[l1_field.iBits] ){
             l1_stats.cache_read++;
             // moidfy lru counter
@@ -322,9 +347,13 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
                 }
         }
 
-        else if(l1_field.tBits != l1_way.one_way[l1_field.iBits] && l1_dirtyBit.one_way[l1_field.iBits] == "D"){
+        // MISS CASE
+        else if(l1_field.tBits != l1_way.one_way[l1_field.iBits]){
+            if(l1_dirtyBit.one_way[l1_field.iBits] == "D"){
+                l1_stats.cache_wirteBack++;
+            }
             l1_stats.cache_read_miss++;
-            l1_stats.cache_wirteBack++;
+            
             traffic++; //traffic because writeback
             if (cp->L2_SIZE == 0){
                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -350,6 +379,7 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
                         l2_lru.one_way[l2_field.iBits] += 1;
                     }
                 }
+                /*
                 else if(l2_field.tBits != l2_way.one_way[l2_field.iBits] && l2_dirtyBit.one_way[l2_field.iBits] != "D"){
                     l2_stats.cache_read_miss++;
                     traffic++;
@@ -373,9 +403,13 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
                         }
                     }
                 }
-                else if(l2_field.tBits != l2_way.one_way[l2_field.iBits] && l2_dirtyBit.one_way[l2_field.iBits] == "D"){
+                */
+                else if(l2_field.tBits != l2_way.one_way[l2_field.iBits]){
+                    if(l2_dirty_bit.one_way[l2_field.iBits] == "D"){
+                        l2_stats.cache_wirteBack++;
+                    }
                     l2_stats.cache_read_miss++;
-                    l2_stats.cache_wirteBack++;
+                    
                     traffic++;
                     if(cp->INCLUSION_PROPERTY == 0){
                         l1_way.one_way[l1_field.iBits] = l1_field.iBits;
@@ -383,25 +417,26 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
                         
                     }
                     else if(cp->INCLUSION_PROPERTY == 1){
-                        for(int i = 0; i<l1_way.one_way.size; i++){
+                        for(int i = 0; i < l1_way.one_way.size(); i++){
                             if(l1_way.one_way[i] == l2_ref.one_way[l2_field.iBits]){
                                 ref = i;
                                 l1_vld.clmn1[i] = "invalid";
+                                l1_way.one_way[i] = 0;
                                 break;
                             }
                         }
                         
                         l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        if(cp->REPLACEMENT_POLICY == 0){
+                        l2_ref.one_way[l2_field.iBits] = l2_field.tBits; // saving l1 tag to use when setting invalid...
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-                        }
+                        
                     }
                 }
         
 
             }
         }
-
+        /*
         // l1 miss and tag is not dirty
         else if(l1_field.tBits != l1_way.one_way[l1_field.iBits] && l1_dirtyBit.one_way[l1_field.iBits] != "D"){
             
@@ -477,13 +512,12 @@ void L1_access(std::vector<std::string>adr, struct CACHE *cp, unsigned int setNu
             }
         
         }
-
-        
+        */  
     }
 
     // operation write //
-    else if(adr[0] == "w"){
-        continue;
+    else if(adr[0] == "ww"){
+        
         if(l1_way.one_way[l1_field.iBits] == 0){
             l1_stats.cache_write_miss++;
             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
