@@ -64,7 +64,13 @@ struct l1_l2_ref
     std::vector<unsigned int> third_way;
     std::vector<unsigned int> forth_way;
 } l2_ref;
-
+struct cache_inclusion
+{
+    std::vector<unsigned int> one_way;
+    std::vector<unsigned int> two_way;
+    std::vector<unsigned int> third_way;
+    std::vector<unsigned int> forth_way;
+} l1_inc, l2_inc;
 struct VALIDITY
 {
     std::vector<std::string> clmn1;
@@ -198,6 +204,11 @@ int main(int argc, char *argv[])
     l1_optimal.third_way.resize(L1_cache_set, "0");
     l1_optimal.forth_way.resize(L1_cache_set, "0");
 
+    l1_inc.one_way.resize(L1_cache_set, 0);
+    l1_inc.two_way.resize(L1_cache_set, 0);
+    l1_inc.third_way.resize(L1_cache_set, 0);
+    l1_inc.forth_way.resize(L1_cache_set, 0);
+
     if (my_cache.L2_SIZE != 0)
     {
         l2_way.one_way.resize(L2_cache_set, 0);
@@ -219,6 +230,11 @@ int main(int argc, char *argv[])
         l2_dirty_bit.two_way.resize(L2_cache_set, " ");
         l2_dirty_bit.third_way.resize(L2_cache_set, " ");
         l2_dirty_bit.forth_way.resize(L2_cache_set, " ");
+
+        l2_inc.one_way.resize(L1_cache_set, 0);
+        l2_inc.two_way.resize(L1_cache_set, 0);
+        l2_inc.third_way.resize(L1_cache_set, 0);
+        l2_inc.forth_way.resize(L1_cache_set, 0);
     }
     // end resize vector according to set size
 
@@ -264,7 +280,7 @@ int main(int argc, char *argv[])
         {
             input.push_back(token);
         }
-        tagContent.push_back(input[0]);
+        tagContent.push_back(input[1]);
     }
     for (int i = 0; i < fileContent.size(); i++)
     {
@@ -279,7 +295,7 @@ int main(int argc, char *argv[])
 
         //std::cout << input[0] << std::endl;
         //std::cout << input[1] << std::endl;
-
+        
         hexAd = strtoul(input[1].c_str(), 0, 16);
 
         //calculate tag address & index address
@@ -321,15 +337,15 @@ int main(int argc, char *argv[])
     }*/
     // end cache access process //
     std::cout << "===== Simulator configuration =====" << std::endl;
-    std::cout << std::dec << "BLOCKSIZE: " << my_cache.BLOCKSIZE <<std::endl;
-    std::cout << std::dec << "L1_SIZE: " << my_cache.L1_SIZE <<std::endl;
-    std::cout << std::dec << "L1_ASSOC: " << my_cache.L1_ASSOC <<std::endl;
-    std::cout << std::dec << "L2_SIZE: " << my_cache.L2_SIZE <<std::endl;
-    std::cout << std::dec << "L2_ASSOC: " << my_cache.L2_ASSOC <<std::endl;
+    std::cout << std::dec << "BLOCKSIZE: " << my_cache.BLOCKSIZE << std::endl;
+    std::cout << std::dec << "L1_SIZE: " << my_cache.L1_SIZE << std::endl;
+    std::cout << std::dec << "L1_ASSOC: " << my_cache.L1_ASSOC << std::endl;
+    std::cout << std::dec << "L2_SIZE: " << my_cache.L2_SIZE << std::endl;
+    std::cout << std::dec << "L2_ASSOC: " << my_cache.L2_ASSOC << std::endl;
     std::cout << std::dec << "REPLACEMENT POLICY: " << my_cache.REPLACEMENT_POLICY << std::endl;
     std::cout << std::dec << "INCLUSION PROPERTY: " << my_cache.INCLUSION_PROPERTY << std::endl;
     std::cout << std::dec << "trace_file: " << my_cache.trace_file << std::endl;
-    
+
     if (my_cache.L1_ASSOC == 2 && my_cache.L2_ASSOC == 0)
     {
         std::cout << "===== L1 contents =====" << std::endl;
@@ -1062,7 +1078,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count)
 {
     int ref = 0;
-    if (cp->REPLACEMENT_POLICY == 0)
+    if (cp->REPLACEMENT_POLICY == 0 && cp->INCLUSION_PROPERTY == 0)
     {
 
         if (adr[0] == "r")
@@ -1797,40 +1813,1113 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         }
                     }
                 }
+            }
+        }
+    }
+    else if (cp->REPLACEMENT_POLICY == 0 && cp->INCLUSION_PROPERTY == 1)
+    {
+        {
 
-                /*if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+            if (adr[0] == "r")
+            {
+                // HIT CASE
+                if (l1_field.tBits == l1_way.one_way[l1_field.iBits] && l1_vld.clmn1[l1_field.iBits] != "invalid")
                 {
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
-                    if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
-                    {
-                        l1_stats.cache_write_back++;
-                        l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
-                    }
-
-                    traffic++;
-                    l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-                    l1_stats.cache_write++;
-                    l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                    l1_stats.cache_read++;
+                    // moidfy lru counter
                     l1_lru.one_way[l1_field.iBits] = count;
                 }
 
-                else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                else if (l1_field.tBits == l1_way.two_way[l1_field.iBits] && l1_vld.clmn2[l1_field.iBits] != "invalid")
                 {
-                    if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                    l1_stats.cache_read++;
+                    // moidfy lru counter
+                    l1_lru.two_way[l1_field.iBits] = count;
+                }
+
+                // L1 MISS CASE
+                else
+                {
+
+                    l1_stats.cache_read_miss++;
+
+                    if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                     {
-                        l1_stats.cache_write_back++;
-                        l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        l2_stats.cache_read++;
+                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        // moidfy lru counter
+                        l2_lru.one_way[l2_field.iBits] = count;
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                            l1_vld.clmn1[l1_field.iBits] = " ";
+                        }
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                            l1_vld.clmn2[l1_field.iBits] = " ";
+                        }
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
                     }
 
-                    traffic++;
-                    l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                    else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
+                    {
+                        l2_stats.cache_read++;
+                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        // moidfy lru counter
+                        l2_lru.two_way[l2_field.iBits] = count;
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                            l1_vld.clmn1[l1_field.iBits] = " ";
+                        }
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                            l1_vld.clmn2[l1_field.iBits] = " ";
+                        }
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+                    }
+                    else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
+                    {
+                        l2_stats.cache_read++;
+                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        // moidfy lru counter
+                        l2_lru.third_way[l2_field.iBits] = count;
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                            l1_vld.clmn1[l1_field.iBits] = " ";
+                        }
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                            l1_vld.clmn2[l1_field.iBits] = " ";
+                        }
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+                    }
+                    else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
+                    {
+                        l2_stats.cache_read++;
+                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        // moidfy lru counter
+                        l2_lru.forth_way[l2_field.iBits] = count;
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                            l1_vld.clmn1[l1_field.iBits] = " ";
+                        }
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                            l1_vld.clmn2[l1_field.iBits] = " ";
+                        }
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            // traffic++;
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            // traffic++;
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_read++;
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+                    }
+
+                    // L2 MISS
+                    else
+                    {
+                        l2_stats.cache_read_miss++;
+                        ref = std::min(l2_lru.one_way[l2_field.iBits], std::min(l2_lru.two_way[l2_field.iBits], std::min(l2_lru.third_way[l2_field.iBits],
+                                                                                                                         l2_lru.forth_way[l2_field.iBits])));
+
+                        if (ref == l2_lru.one_way[l2_field.iBits])
+                        {
+
+                            if (l2_dirty_bit.one_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.one_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+                            for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.one_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.one_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+                            traffic++;
+                            l2_way.one_way[l2_field.iBits] = l2_field.tBits;
+                            l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_stats.cache_read++;
+                            l2_lru.one_way[l2_field.iBits] = count;
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+                        else if (ref == l2_lru.two_way[l2_field.iBits])
+                        {
+                            if (l2_dirty_bit.two_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.two_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+                            for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.two_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.two_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+                            traffic++;
+                            l2_way.two_way[l2_field.iBits] = l2_field.tBits;
+                            l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_stats.cache_read++;
+                            l2_lru.two_way[l2_field.iBits] = count;
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+
+                        else if (ref == l2_lru.third_way[l2_field.iBits])
+                        {
+                            if (l2_dirty_bit.third_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.third_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+                            for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.third_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.third_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+                            traffic++;
+                            l2_way.third_way[l2_field.iBits] = l2_field.tBits;
+                            l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_stats.cache_read++;
+                            l2_lru.third_way[l2_field.iBits] = count;
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                // traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+
+                        else if (ref == l2_lru.forth_way[l2_field.iBits])
+                        {
+                            if (l2_dirty_bit.forth_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.forth_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+                            for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.forth_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.forth_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+
+                            traffic++;
+                            l2_way.forth_way[l2_field.iBits] = l2_field.tBits;
+                            l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_stats.cache_read++;
+                            l2_lru.forth_way[l2_field.iBits] = count;
+
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                // traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                // traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_read++;
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // WRTIE OPERATION
+            else if (adr[0] == "w")
+            {
+                // HIT CASE
+                if (l1_field.tBits == l1_way.one_way[l1_field.iBits] && l1_vld.clmn1[l1_field.iBits] != "invalid")
+                {
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                    // moidfy lru counter
+                    l1_lru.one_way[l1_field.iBits] = count;
+                }
+
+                else if (l1_field.tBits == l1_way.two_way[l1_field.iBits] && l1_vld.clmn1[l1_field.iBits] != "invalid")
+                {
                     l1_stats.cache_write++;
                     l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                    // moidfy lru counter
                     l1_lru.two_way[l1_field.iBits] = count;
-                }*/
+                }
+                // MISS CASE
+                else
+                {
+                    l1_stats.cache_write_miss++;
+                    
+                    //L2 hit case
+                    if (l2_field.tBits == l2_way.one_way[l2_field.iBits] )
+                    {
+                        l2_stats.cache_write++;
+                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_dirty_bit.one_way[l2_field.iBits] = "D";
+                        // moidfy lru counter
+                        l2_lru.one_way[l2_field.iBits] = count;
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+
+                        
+
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+                    }
+
+                    else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
+                    {
+                        l2_stats.cache_write++;
+                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_dirty_bit.two_way[l2_field.iBits] = "D";
+                        // moidfy lru counter
+                        l2_lru.two_way[l2_field.iBits] = count;
+
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+                    }
+                    else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
+                    {
+                        l2_stats.cache_write++;
+                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_dirty_bit.third_way[l2_field.iBits] = "D";
+                        // moidfy lru counter
+                        l2_lru.third_way[l2_field.iBits] = count;
+
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+                    }
+                    else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
+                    {
+                        l2_stats.cache_write++;
+                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_dirty_bit.forth_way[l2_field.iBits] = "D";
+                        // moidfy lru counter
+                        l2_lru.forth_way[l2_field.iBits] = count;
+
+                        if (l1_vld.clmn1[l1_field.iBits] == "invalid")
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_vld.clmn2[l1_field.iBits] == "invalid")
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                            l1_lru.one_way[l1_field.iBits] = count;
+                        }
+
+                        else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                        {
+                            if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                            {
+                                l1_stats.cache_write_back++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                            l1_stats.cache_write++;
+                            l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                            l1_lru.two_way[l1_field.iBits] = count;
+                        }
+                    }
+
+                    else
+                    {
+                        l2_stats.cache_read_miss++;
+                        ref = std::min(l2_lru.one_way[l2_field.iBits], std::min(l2_lru.two_way[l2_field.iBits], std::min(l2_lru.third_way[l2_field.iBits],
+                                                                                                                         l2_lru.forth_way[l2_field.iBits])));
+                        if (ref == l2_lru.one_way[l2_field.iBits])
+                        {
+                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                            if (l2_dirty_bit.one_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.one_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+                            for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.one_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.one_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+                            traffic++;
+                            l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_way.one_way[l2_field.iBits] = l2_field.tBits;
+                            l2_stats.cache_write++;
+                            l2_dirty_bit.one_way[l2_field.iBits] = "D";
+                            l2_lru.one_way[l2_field.iBits] = count;
+
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+
+                        else if (ref == l2_lru.two_way[l2_field.iBits])
+                        {
+                            if (l2_dirty_bit.two_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.two_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                             for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.two_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.one_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+                            traffic++;
+                            l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_way.two_way[l2_field.iBits] = l2_field.tBits;
+                            l2_stats.cache_write++;
+                            l2_dirty_bit.two_way[l2_field.iBits] = "D";
+                            l2_lru.two_way[l2_field.iBits] = count;
+
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+
+                        else if (ref == l2_lru.third_way[l2_field.iBits])
+                        {
+                            if (l2_dirty_bit.third_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.third_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                            for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.third_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.third_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+                            traffic++;
+                            l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_way.third_way[l2_field.iBits] = l2_field.tBits;
+                            l2_stats.cache_write++;
+                            l2_dirty_bit.third_way[l2_field.iBits] = "D";
+                            l2_lru.third_way[l2_field.iBits] = count;
+
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                // traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+
+                        else if (ref == l2_lru.forth_way[l2_field.iBits])
+                        {
+                            if (l2_dirty_bit.forth_way[l2_field.iBits] == "D")
+                            {
+                                l2_stats.cache_write_back++;
+                                l2_dirty_bit.forth_way[l2_field.iBits] = " ";
+                                traffic++; //traffic because writeback
+                            }
+
+                             for (int i = 0; i < l1_way.one_way.size(); ++i)
+                            {
+                                if (l1_way.one_way[i] == l2_inc.forth_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn1[i] = "invalid";
+                                    break;
+                                }
+                                else if (l1_way.two_way[i] == l2_inc.forth_way[l2_field.iBits])
+                                {
+                                    l1_vld.clmn2[i] = "invalid";
+                                    break;
+                                }
+                            }
+                            traffic++;
+                            l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_way.forth_way[l2_field.iBits] = l2_field.tBits;
+                            l2_stats.cache_write++;
+                            l2_dirty_bit.forth_way[l2_field.iBits] = "D";
+                            l2_lru.forth_way[l2_field.iBits] = count;
+
+                            if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
+                            {
+                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
+                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+                                if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                // traffic++;
+                                l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                                l1_lru.one_way[l1_field.iBits] = count;
+                            }
+
+                            else if (l1_lru.two_way[l1_field.iBits] < l1_lru.one_way[l1_field.iBits])
+                            {
+                                if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                                {
+                                    l1_stats.cache_write_back++;
+                                    l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                                    traffic++; //traffic because writeback
+                                }
+
+                                //traffic++;
+                                l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                                l1_stats.cache_write++;
+                                l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                                l1_lru.two_way[l1_field.iBits] = count;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
