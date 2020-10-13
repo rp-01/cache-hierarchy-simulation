@@ -116,6 +116,7 @@ std::vector<std::string> tagContent;
 // START main //
 int main(int argc, char *argv[])
 {
+    std::cout.precision(6);
 
     char *pCh;
     // start store cache parameters //
@@ -154,14 +155,12 @@ int main(int argc, char *argv[])
     {
         L2_cache_set = my_cache.L2_SIZE / (my_cache.L2_ASSOC * my_cache.BLOCKSIZE);
         l2_bits = calcBit(L2_cache_set, my_cache.BLOCKSIZE);
-
         if ((my_cache.BLOCKSIZE & (my_cache.BLOCKSIZE - 1) != 0) && (L2_cache_set & (L2_cache_set - 1) != 0))
         {
             std::cout << "Blocksize and set value need to be power of 2 for this simulator." << std::endl;
             return 1;
         }
     }
-
     // end check input constraints
 
     // start find # of sets, tag bits, index bits, blockoffset //
@@ -306,8 +305,9 @@ int main(int argc, char *argv[])
         {
             l2_field = addBits(hexAd, l2_bits.tagBit, l2_bits.indexBit);
         }
-        //std::cout << std::dec << " address line # " << i << std::endl;
+
         //std::cout << std::hex << "address: "<< l1_field.adrBits << std::endl;
+
         tags.push_back(l1_field.tBits);
         //std::cout << std::hex << "tag: " << l1_field.tBits << std::endl;
         // std::cout << std::dec << "index: " << l1_field.iBits << std::endl;
@@ -337,6 +337,27 @@ int main(int argc, char *argv[])
     /*for(int i = 0; i < l1_lru.one_way.size(); i++){
         std::cout << std::dec << "lru" << i << ": " << l1_lru.one_way[i] << "\t" << l1_lru.two_way[i] << std::endl;
     }*/
+    std::string r_policy, i_policy;
+    if (my_cache.REPLACEMENT_POLICY == 0)
+    {
+        r_policy = "LRU";
+    }
+    else if (my_cache.REPLACEMENT_POLICY == 1)
+    {
+        r_policy = "Pseudo-LRU";
+    }
+    else if (my_cache.REPLACEMENT_POLICY == 2)
+    {
+        r_policy = "Optimal";
+    }
+    if (my_cache.INCLUSION_PROPERTY == 0)
+    {
+        i_policy = "non-inclusive";
+    }
+    else if (my_cache.INCLUSION_PROPERTY == 1)
+    {
+        i_policy = "inclusive";
+    }
     // end cache access process //
     std::cout << "===== Simulator configuration =====" << std::endl;
     std::cout << std::dec << "BLOCKSIZE: " << my_cache.BLOCKSIZE << std::endl;
@@ -344,8 +365,8 @@ int main(int argc, char *argv[])
     std::cout << std::dec << "L1_ASSOC: " << my_cache.L1_ASSOC << std::endl;
     std::cout << std::dec << "L2_SIZE: " << my_cache.L2_SIZE << std::endl;
     std::cout << std::dec << "L2_ASSOC: " << my_cache.L2_ASSOC << std::endl;
-    std::cout << std::dec << "REPLACEMENT POLICY: " << my_cache.REPLACEMENT_POLICY << std::endl;
-    std::cout << std::dec << "INCLUSION PROPERTY: " << my_cache.INCLUSION_PROPERTY << std::endl;
+    std::cout << std::dec << "REPLACEMENT POLICY: " << r_policy << std::endl;
+    std::cout << std::dec << "INCLUSION PROPERTY: " << i_policy << std::endl;
     std::cout << std::dec << "trace_file: " << my_cache.trace_file << std::endl;
 
     if (my_cache.L1_ASSOC == 2 && my_cache.L2_ASSOC == 0)
@@ -377,7 +398,7 @@ int main(int argc, char *argv[])
             std::cout << std::hex << l1_way.one_way[i] << "  " << l1_dirty_bit.one_way[i] << "    " << l1_way.two_way[i] << "  " << l1_dirty_bit.two_way[i] << std::endl;
         }
         std::cout << "===== L2 contents =====" << std::endl;
-        for (int i = 0; i < l1_way.one_way.size(); i++)
+        for (int i = 0; i < l2_way.one_way.size(); i++)
         {
             std::cout << std::dec << "Set\t" << i << ":\t";
             std::cout << std::hex << l2_way.one_way[i] << "  " << l2_dirty_bit.one_way[i] << "    " << l2_way.two_way[i] << "  "
@@ -393,7 +414,7 @@ int main(int argc, char *argv[])
             std::cout << std::hex << l1_way.one_way[i] << "  " << l1_dirty_bit.one_way[i] << "    " << std::endl;
         }
         std::cout << "===== L2 contents =====" << std::endl;
-        for (int i = 0; i < l1_way.one_way.size(); i++)
+        for (int i = 0; i < l2_way.one_way.size(); i++)
         {
             std::cout << std::dec << "Set\t" << i << ":\t";
             std::cout << std::hex << l2_way.one_way[i] << "  " << l2_dirty_bit.one_way[i] << "    " << l2_way.two_way[i] << "  "
@@ -401,37 +422,47 @@ int main(int argc, char *argv[])
         }
     }
 
+    l1_stats.miss_rate = (double)(l1_stats.cache_read_miss + l1_stats.cache_write_miss) / (double)(l1_stats.cache_write + l1_stats.cache_read);
+
+    if (my_cache.L2_SIZE != 0)
+    {
+        l2_stats.miss_rate = (double)l2_stats.cache_read_miss / (double)l2_stats.cache_read;
+    }
     std::cout << std::dec << "===== Simulation results (raw) =====" << std::endl;
 
-    std::cout << std::dec << "b."
+    std::cout << std::dec
               << "a. number of L1 reads: " << l1_stats.cache_read << std::endl;
-    std::cout << std::dec << "a."
+    std::cout << std::dec
               << "b. number of L1 read misses: " << l1_stats.cache_read_miss << std::endl;
-    std::cout << std::dec << "c."
+    std::cout << std::dec
               << "c. number of L1 writes: " << l1_stats.cache_write << std::endl;
-    std::cout << std::dec << "c."
-              << "d. number of L1 write misses: " << l1_stats.cache_write_miss << std::endl;
+    std::cout << std::dec
+              << "d. number of L1 write misses: " << std::fixed << l1_stats.cache_write_miss << std::endl;
 
     std::cout << std::dec << "e. L1 miss rate: " << l1_stats.miss_rate << std::endl;
 
-    std::cout << std::dec << "d."
+    std::cout << std::dec
               << "f. number of L1 writebacks:" << l1_stats.cache_write_back << std::endl;
-    std::cout << std::dec << "b."
+    std::cout << std::dec
               << "g. number of L2 reads: " << l2_stats.cache_read << std::endl;
-    std::cout << std::dec << "a."
+    std::cout << std::dec
               << "h. number of L2 read misses: " << l2_stats.cache_read_miss << std::endl;
-    std::cout << std::dec << "c."
+    std::cout << std::dec
               << "i. number of L2 writes: " << l2_stats.cache_write << std::endl;
-    std::cout << std::dec << "c."
+    std::cout << std::dec
               << "j. number of L2 write misses: " << l2_stats.cache_write_miss << std::endl;
-
-    std::cout << std::dec << "k. L2 miss rate: " << l2_stats.miss_rate << std::endl;
+    if (my_cache.L2_SIZE != 0)
+    {
+        std::cout << std::dec << "k. L2 miss rate: " << std::fixed << l2_stats.miss_rate << std::endl;
+    }
+    else
+    {
+        std::cout << std::dec << "k. L2 miss rate: " << "0" << std::endl;
+    }
 
     std::cout << std::dec
               << "l. number of L2 writebacks:" << l2_stats.cache_write_back << std::endl;
-    std::cout << std::dec << "d."
-              << "m. total memory traffic: " << traffic << std::endl;
-    std::cout << "l2 sets: " << L2_cache_set << std::endl;
+    std::cout << std::dec << "m. total memory traffic: " << traffic << std::endl;
 
     return 0;
 }
