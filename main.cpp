@@ -36,7 +36,7 @@ struct addressInBits
     unsigned int adrBits = 0;
     unsigned int tBits = 0;
     unsigned int iBits = 0;
-} l1_field, l2_field;
+} l1_field, l2_field, cache_field;
 
 struct state
 {
@@ -97,10 +97,10 @@ struct LRU
 
 struct optimal_ref
 {
-    std::vector<std::string> one_way;
-    std::vector<std::string> two_way;
-    std::vector<std::string> third_way;
-    std::vector<std::string> forth_way;
+    std::vector<unsigned int> one_way;
+    std::vector<unsigned int> two_way;
+    std::vector<unsigned int> third_way;
+    std::vector<unsigned int> forth_way;
 } l1_optimal, l2_optimal;
 
 struct addressInBits addBits(unsigned int address_bits, unsigned int tag_bits, unsigned int index_bits);
@@ -112,7 +112,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count);
 void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count);
 std::vector<std::string> fileContent;
-std::vector<std::string> tagContent;
+std::vector<unsigned int> tagContent;
 // START main //
 int main(int argc, char *argv[])
 {
@@ -200,10 +200,10 @@ int main(int argc, char *argv[])
     l1_vld.clmn3.resize(L1_cache_set, "0");
     l1_vld.clmn4.resize(L1_cache_set, "0");
 
-    l1_optimal.one_way.resize(L1_cache_set, "0");
-    l1_optimal.two_way.resize(L1_cache_set, "0");
-    l1_optimal.third_way.resize(L1_cache_set, "0");
-    l1_optimal.forth_way.resize(L1_cache_set, "0");
+    l1_optimal.one_way.resize(L1_cache_set, 0);
+    l1_optimal.two_way.resize(L1_cache_set, 0);
+    l1_optimal.third_way.resize(L1_cache_set, 0);
+    l1_optimal.forth_way.resize(L1_cache_set, 0);
 
     l1_inc.one_way.resize(L1_cache_set, 0);
     l1_inc.two_way.resize(L1_cache_set, 0);
@@ -265,11 +265,33 @@ int main(int argc, char *argv[])
     {
         std::cout << "File doesn't exist." << std::endl;
     }
+    //std::cout << "file size: " << fileContent.size() << std::endl;
     //std::cout << std::hex << fileContent[0] << std::endl;
     fileContent[0].erase(0, 3);
     //std::cout << std::hex << fileContent[0] << std::endl;
     // end get file data //
+    int cc = 0;
+    for (int i = 0; i < fileContent.size(); i++)
+    {
+        cc = i;
+        //std::cout<< std::dec << "fetching address at line # " << i << std::endl;
+        std::istringstream stm(fileContent[i]);
+        input.clear();
+        while (stm >> token)
+        {
+            input.push_back(token);
+        }
 
+        //std::cout << input[0] << std::endl;
+        //std::cout << input[1] << std::endl;
+
+        hexAd = strtoul(input[1].c_str(), 0, 16);
+        cache_field = addBits(hexAd, l1_bits.tagBit, l1_bits.indexBit);
+        tagContent.push_back(cache_field.tBits);
+    }
+    //std::cout << "tag content " << tagContent[0] << std::endl;
+    //std::cout << "tag content " << tagContent[1] << std::endl;
+    //std::cout << "tag content " << tagContent[2] << std::endl;
     // start cache access process //
     //std::cout << std::dec << "file size: " << fileContent.size() << std::endl;
     std::vector<unsigned int> tags;
@@ -281,7 +303,7 @@ int main(int argc, char *argv[])
         {
             input.push_back(token);
         }
-        tagContent.push_back(input[1]);
+        //tagContent.push_back(input[1]);
     }
     for (int i = 0; i < fileContent.size(); i++)
     {
@@ -305,7 +327,7 @@ int main(int argc, char *argv[])
         {
             l2_field = addBits(hexAd, l2_bits.tagBit, l2_bits.indexBit);
         }
-
+        //std::cout << "l1 field: " << l1_field.tBits << std::endl;
         //std::cout << std::hex << "address: "<< l1_field.adrBits << std::endl;
 
         tags.push_back(l1_field.tBits);
@@ -428,6 +450,15 @@ int main(int argc, char *argv[])
     {
         l2_stats.miss_rate = (double)l2_stats.cache_read_miss / (double)l2_stats.cache_read;
     }
+
+    if (my_cache.L2_SIZE != 0 && my_cache.INCLUSION_PROPERTY == 0)
+    {
+        traffic = l2_stats.cache_read_miss + l2_stats.cache_write_miss + l2_stats.cache_write_back;
+    }
+    else if (my_cache.L2_SIZE == 0)
+    {
+        traffic = l1_stats.cache_read_miss + l1_stats.cache_write_miss + l1_stats.cache_write_back;
+    }
     std::cout << std::dec << "===== Simulation results (raw) =====" << std::endl;
 
     std::cout << std::dec
@@ -457,13 +488,14 @@ int main(int argc, char *argv[])
     }
     else
     {
-        std::cout << std::dec << "k. L2 miss rate: " << "0" << std::endl;
+        std::cout << std::dec << "k. L2 miss rate: "
+                  << "0" << std::endl;
     }
 
     std::cout << std::dec
               << "l. number of L2 writebacks:" << l2_stats.cache_write_back << std::endl;
     std::cout << std::dec << "m. total memory traffic: " << traffic << std::endl;
-
+    std::cout << "file line: " << cc << std::endl;
     return 0;
 }
 
@@ -773,7 +805,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
     // operation read //
     int ref = 0;
     int ref_oneWay = 0;
-    int ref_twoWay = 0;
+
     if (cp->REPLACEMENT_POLICY == 0 || cp->REPLACEMENT_POLICY == 1)
     {
 
@@ -900,34 +932,39 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                l1_optimal.one_way[l1_field.iBits] = adr[1];
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
             }
 
             else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                l1_optimal.two_way[l1_field.iBits] = adr[1];
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
             }
-            // MISS CASE
+            // L1 empty block
             else if (l1_way.one_way[l1_field.iBits] == 0)
             {
                 traffic++;
                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                 l1_stats.cache_read_miss++;
                 l1_stats.cache_read++;
-                l1_optimal.one_way[l1_field.iBits] = adr[1];
+                
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
             }
+
+            // L1 empty block
             else if (l1_way.two_way[l1_field.iBits] == 0)
             {
                 traffic++;
                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                 l1_stats.cache_read_miss++;
                 l1_stats.cache_read++;
-                l1_optimal.two_way[l1_field.iBits] = adr[1];
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
             }
+
+            // L1 miss case
             else
             {
-                l1_stats.cache_read_miss++;
+
                 for (int i = count + 1; i < tagContent.size(); i++)
                 {
                     if (l1_optimal.one_way[l1_field.iBits] == tagContent[i])
@@ -946,6 +983,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                 if (ref_oneWay == 2)
                 {
+                    l1_stats.cache_read_miss++;
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
@@ -956,11 +994,12 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_read++;
-                    l1_optimal.one_way[l1_field.iBits] = adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                 }
 
-                else if (ref_twoWay == 1)
+                else if (ref_oneWay == 1)
                 {
+                    l1_stats.cache_read_miss++;
                     if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
@@ -971,11 +1010,12 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     traffic++;
                     l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_read++;
-                    l1_optimal.two_way[l1_field.iBits] = adr[1];
+                    l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                 }
 
                 else if (ref_oneWay == 0)
                 {
+                    l1_stats.cache_read_miss++;
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
@@ -986,7 +1026,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_read++;
-                    l1_optimal.one_way[l1_field.iBits] = adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                 }
             }
         }
@@ -999,7 +1039,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
-                l1_optimal.one_way[l1_field.iBits] = adr[1];
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                 // moidfy lru counter
             }
 
@@ -1007,7 +1047,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
-                l1_optimal.two_way[l1_field.iBits] = adr[1];
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                 // moidfy lru counter
             }
             // MISS CASE
@@ -1015,13 +1055,13 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             else if (l1_way.one_way[l1_field.iBits] == 0)
             {
                 traffic++;
-
+                
                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                 l1_stats.cache_write_miss++;
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
                 l1_lru.one_way[l1_field.iBits] = count;
-                l1_optimal.one_way[l1_field.iBits] = adr[1];
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
             }
             else if (l1_way.two_way[l1_field.iBits] == 0)
             {
@@ -1031,7 +1071,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 l1_stats.cache_write++;
                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
                 l1_lru.two_way[l1_field.iBits] = count;
-                l1_optimal.two_way[l1_field.iBits] = adr[1];
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
             }
 
             else
@@ -1063,7 +1103,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
                         traffic++; //traffic because writeback
                     }
-                    l1_optimal.one_way[l1_field.iBits] = adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_write++;
@@ -1071,7 +1111,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     l1_lru.one_way[l1_field.iBits] = count;
                 }
 
-                else if (ref_twoWay == 1)
+                else if (ref_oneWay == 1)
                 {
                     if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
                     {
@@ -1079,7 +1119,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l1_dirty_bit.two_way[l1_field.iBits] = " ";
                         traffic++; //traffic because writeback
                     }
-                    l1_optimal.two_way[l1_field.iBits] = adr[1];
+                    l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                     traffic++;
                     l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_write++;
@@ -1097,7 +1137,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
                         traffic++; //traffic because writeback
                     }
-                    l1_optimal.one_way[l1_field.iBits] = adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_write++;
