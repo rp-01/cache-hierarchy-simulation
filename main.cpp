@@ -55,6 +55,10 @@ struct CACHE_WAY
     std::vector<unsigned int> two_way;
     std::vector<unsigned int> third_way;
     std::vector<unsigned int> forth_way;
+    std::vector<unsigned int> five_way;
+    std::vector<unsigned int> six_way;
+    std::vector<unsigned int> seven_way;
+    std::vector<unsigned int> eight_way;
 } l1_way, l2_way;
 
 struct l1_l2_ref
@@ -63,6 +67,10 @@ struct l1_l2_ref
     std::vector<unsigned int> two_way;
     std::vector<unsigned int> third_way;
     std::vector<unsigned int> forth_way;
+    std::vector<unsigned int> five_way;
+    std::vector<unsigned int> six_way;
+    std::vector<unsigned int> seven_way;
+    std::vector<unsigned int> eight_way;
 } l2_ref;
 struct cache_inclusion
 {
@@ -70,6 +78,10 @@ struct cache_inclusion
     std::vector<unsigned int> two_way;
     std::vector<unsigned int> third_way;
     std::vector<unsigned int> forth_way;
+    std::vector<unsigned int> five_way;
+    std::vector<unsigned int> six_way;
+    std::vector<unsigned int> seven_way;
+    std::vector<unsigned int> eight_way;
 } l1_inc, l2_inc;
 struct VALIDITY
 {
@@ -77,6 +89,11 @@ struct VALIDITY
     std::vector<std::string> clmn2;
     std::vector<std::string> clmn3;
     std::vector<std::string> clmn4;
+    std::vector<std::string> clmn5;
+    std::vector<std::string> clmn6;
+    std::vector<std::string> clmn7;
+    std::vector<std::string> clmn8;
+
 } l1_vld, l2_vld;
 
 // struct to save relevent dirty bits
@@ -86,6 +103,10 @@ struct DIRTY_BIT
     std::vector<std::string> two_way;
     std::vector<std::string> third_way;
     std::vector<std::string> forth_way;
+    std::vector<std::string> five_way;
+    std::vector<std::string> six_way;
+    std::vector<std::string> seven_way;
+    std::vector<std::string> eight_way;
 } l1_dirty_bit, l2_dirty_bit;
 struct LRU
 {
@@ -93,6 +114,10 @@ struct LRU
     std::vector<int> two_way;
     std::vector<int> third_way;
     std::vector<int> forth_way;
+    std::vector<int> five_way;
+    std::vector<int> six_way;
+    std::vector<int> seven_way;
+    std::vector<int> eight_way;
 } l1_lru, l2_lru;
 
 struct optimal_ref
@@ -101,19 +126,28 @@ struct optimal_ref
     std::vector<unsigned int> two_way;
     std::vector<unsigned int> third_way;
     std::vector<unsigned int> forth_way;
+    std::vector<unsigned int> five_way;
+    std::vector<unsigned int> six_way;
+    std::vector<unsigned int> seven_way;
+    std::vector<unsigned int> eight_way;
 } l1_optimal, l2_optimal;
 
 struct addressInBits addBits(unsigned int address_bits, unsigned int tag_bits, unsigned int index_bits);
-
+std::vector<unsigned int> l1_ful_asoc;
+std::vector<unsigned int> l1_ful_lru;
+std::vector<std::string> l1_ful_dirtyBit;
 struct BIT calcBit(unsigned int set, unsigned int blocksize);
 
-void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count);
-void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count);
-void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count);
-void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count);
+void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, int count);
+void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, int count);
+void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, int count);
+void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, int count);
+void asoc_combo_5(std::vector<std::string> adr, struct CACHE *cp, int count);
+void asoc_combo_6(std::vector<std::string> adr, struct CACHE *cp, int count);
+void asoc_combo_full(std::vector<std::string> adr, struct CACHE *cp, int count);
 std::vector<std::string> fileContent;
 std::vector<unsigned int> tagContent;
-// START main //
+
 int main(int argc, char *argv[])
 {
     std::cout.precision(6);
@@ -163,9 +197,9 @@ int main(int argc, char *argv[])
     }
     // end check input constraints
 
-    // start find # of sets, tag bits, index bits, blockoffset //
+    // find # of sets, tag bits, index bits, blockoffset //
     L1_cache_set = my_cache.L1_SIZE / (my_cache.L1_ASSOC * my_cache.BLOCKSIZE);
-    //std::cout << std::dec << "set size " << L1_cache_set << std::endl;
+
     // calcualte # of bits per address field
     l1_bits = calcBit(L1_cache_set, my_cache.BLOCKSIZE);
 
@@ -173,69 +207,112 @@ int main(int argc, char *argv[])
     {
         l2_bits = calcBit(L2_cache_set, my_cache.BLOCKSIZE);
     }
-    //std::cout << "printing address bits" << std::endl;
-    //std::cout << "index bits: " << l1_bits.indexBit << std::endl;
-    // std::cout << "blockoffseet bits: " << l1_bits.blockoffsetBit << std::endl;
-    //std::cout << "tag bits: " << l1_bits.tagBit << std::endl;
-    //std::cout << "end of address bits" << std::endl;
 
     // start Resize vector according to set size
     l1_way.one_way.resize(L1_cache_set, 0);
     l1_way.two_way.resize(L1_cache_set, 0);
     l1_way.third_way.resize(L1_cache_set, 0);
     l1_way.forth_way.resize(L1_cache_set, 0);
+    l1_way.five_way.resize(L1_cache_set, 0);
+    l1_way.six_way.resize(L1_cache_set, 0);
+    l1_way.seven_way.resize(L1_cache_set, 0);
+    l1_way.eight_way.resize(L1_cache_set, 0);
 
     l1_dirty_bit.one_way.resize(L1_cache_set, " ");
     l1_dirty_bit.two_way.resize(L1_cache_set, " ");
     l1_dirty_bit.third_way.resize(L1_cache_set, " ");
     l1_dirty_bit.forth_way.resize(L1_cache_set, " ");
+    l1_dirty_bit.five_way.resize(L1_cache_set, " ");
+    l1_dirty_bit.six_way.resize(L1_cache_set, " ");
+    l1_dirty_bit.seven_way.resize(L1_cache_set, " ");
+    l1_dirty_bit.eight_way.resize(L1_cache_set, " ");
 
     l1_lru.one_way.resize(L1_cache_set, 0);
     l1_lru.two_way.resize(L1_cache_set, 0);
     l1_lru.third_way.resize(L1_cache_set, 0);
     l1_lru.forth_way.resize(L1_cache_set, 0);
+    l1_lru.five_way.resize(L1_cache_set, 0);
+    l1_lru.six_way.resize(L1_cache_set, 0);
+    l1_lru.seven_way.resize(L1_cache_set, 0);
+    l1_lru.eight_way.resize(L1_cache_set, 0);
 
     l1_vld.clmn1.resize(L1_cache_set, "0");
     l1_vld.clmn2.resize(L1_cache_set, "0");
     l1_vld.clmn3.resize(L1_cache_set, "0");
     l1_vld.clmn4.resize(L1_cache_set, "0");
+    l1_vld.clmn5.resize(L1_cache_set, "0");
+    l1_vld.clmn6.resize(L1_cache_set, "0");
+    l1_vld.clmn7.resize(L1_cache_set, "0");
+    l1_vld.clmn8.resize(L1_cache_set, "0");
 
     l1_optimal.one_way.resize(L1_cache_set, 0);
     l1_optimal.two_way.resize(L1_cache_set, 0);
     l1_optimal.third_way.resize(L1_cache_set, 0);
     l1_optimal.forth_way.resize(L1_cache_set, 0);
+    l1_optimal.five_way.resize(L1_cache_set, 0);
+    l1_optimal.six_way.resize(L1_cache_set, 0);
+    l1_optimal.seven_way.resize(L1_cache_set, 0);
+    l1_optimal.eight_way.resize(L1_cache_set, 0);
 
     l1_inc.one_way.resize(L1_cache_set, 0);
     l1_inc.two_way.resize(L1_cache_set, 0);
     l1_inc.third_way.resize(L1_cache_set, 0);
     l1_inc.forth_way.resize(L1_cache_set, 0);
+    l1_inc.five_way.resize(L1_cache_set, 0);
+    l1_inc.six_way.resize(L1_cache_set, 0);
+    l1_inc.seven_way.resize(L1_cache_set, 0);
+    l1_inc.eight_way.resize(L1_cache_set, 0);
 
+    unsigned int totalBlocks = my_cache.L1_SIZE / my_cache.BLOCKSIZE;
+    l1_ful_asoc.resize(totalBlocks, 0);
+    l1_ful_lru.resize(totalBlocks, 0);
+    l1_ful_dirtyBit.resize(totalBlocks, " ");
     if (my_cache.L2_SIZE != 0)
     {
         l2_way.one_way.resize(L2_cache_set, 0);
         l2_way.two_way.resize(L2_cache_set, 0);
         l2_way.third_way.resize(L2_cache_set, 0);
         l2_way.forth_way.resize(L2_cache_set, 0);
+        l2_way.five_way.resize(L2_cache_set, 0);
+        l2_way.six_way.resize(L2_cache_set, 0);
+        l2_way.seven_way.resize(L2_cache_set, 0);
+        l2_way.eight_way.resize(L2_cache_set, 0);
 
         l2_lru.one_way.resize(L2_cache_set, 0);
         l2_lru.two_way.resize(L2_cache_set, 0);
         l2_lru.third_way.resize(L2_cache_set, 0);
         l2_lru.forth_way.resize(L2_cache_set, 0);
+        l2_lru.five_way.resize(L2_cache_set, 0);
+        l2_lru.six_way.resize(L2_cache_set, 0);
+        l2_lru.seven_way.resize(L2_cache_set, 0);
+        l2_lru.eight_way.resize(L2_cache_set, 0);
 
         l2_ref.one_way.resize(L2_cache_set, 0);
         l2_ref.two_way.resize(L2_cache_set, 0);
         l2_ref.third_way.resize(L2_cache_set, 0);
         l2_ref.forth_way.resize(L2_cache_set, 0);
+        l2_ref.five_way.resize(L2_cache_set, 0);
+        l2_ref.six_way.resize(L2_cache_set, 0);
+        l2_ref.seven_way.resize(L2_cache_set, 0);
+        l2_ref.eight_way.resize(L2_cache_set, 0);
 
         l2_dirty_bit.one_way.resize(L2_cache_set, " ");
         l2_dirty_bit.two_way.resize(L2_cache_set, " ");
         l2_dirty_bit.third_way.resize(L2_cache_set, " ");
         l2_dirty_bit.forth_way.resize(L2_cache_set, " ");
+        l2_dirty_bit.five_way.resize(L2_cache_set, " ");
+        l2_dirty_bit.six_way.resize(L2_cache_set, " ");
+        l2_dirty_bit.seven_way.resize(L2_cache_set, " ");
+        l2_dirty_bit.eight_way.resize(L2_cache_set, " ");
 
         l2_inc.one_way.resize(L1_cache_set, 0);
         l2_inc.two_way.resize(L1_cache_set, 0);
         l2_inc.third_way.resize(L1_cache_set, 0);
         l2_inc.forth_way.resize(L1_cache_set, 0);
+        l2_inc.five_way.resize(L1_cache_set, 0);
+        l2_inc.six_way.resize(L1_cache_set, 0);
+        l2_inc.seven_way.resize(L1_cache_set, 0);
+        l2_inc.eight_way.resize(L1_cache_set, 0);
     }
     // end resize vector according to set size
 
@@ -263,18 +340,18 @@ int main(int argc, char *argv[])
     }
     else
     {
-        std::cout << "File doesn't exist." << std::endl;
+        std::cout << "**" << my_cache.trace_file << " doesn't exist.**"<< std::endl;
+        std::cout << "**Please make sure that the trace files are in the same directory as sim_cache executable.**" << std::endl;
     }
-    //std::cout << "file size: " << fileContent.size() << std::endl;
-    //std::cout << std::hex << fileContent[0] << std::endl;
+
     fileContent[0].erase(0, 3);
-    //std::cout << std::hex << fileContent[0] << std::endl;
+
     // end get file data //
     int cc = 0;
     for (int i = 0; i < fileContent.size(); i++)
     {
         cc = i;
-        //std::cout<< std::dec << "fetching address at line # " << i << std::endl;
+
         std::istringstream stm(fileContent[i]);
         input.clear();
         while (stm >> token)
@@ -282,18 +359,11 @@ int main(int argc, char *argv[])
             input.push_back(token);
         }
 
-        //std::cout << input[0] << std::endl;
-        //std::cout << input[1] << std::endl;
-
         hexAd = strtoul(input[1].c_str(), 0, 16);
         cache_field = addBits(hexAd, l1_bits.tagBit, l1_bits.indexBit);
         tagContent.push_back(cache_field.tBits);
     }
-    //std::cout << "tag content " << tagContent[0] << std::endl;
-    //std::cout << "tag content " << tagContent[1] << std::endl;
-    //std::cout << "tag content " << tagContent[2] << std::endl;
-    // start cache access process //
-    //std::cout << std::dec << "file size: " << fileContent.size() << std::endl;
+
     std::vector<unsigned int> tags;
     for (int i = 0; i < fileContent.size(); i++)
     {
@@ -308,16 +378,12 @@ int main(int argc, char *argv[])
     for (int i = 0; i < fileContent.size(); i++)
     {
 
-        //std::cout<< std::dec << "fetching address at line # " << i << std::endl;
         std::istringstream stm(fileContent[i]);
         input.clear();
         while (stm >> token)
         {
             input.push_back(token);
         }
-
-        //std::cout << input[0] << std::endl;
-        //std::cout << input[1] << std::endl;
 
         hexAd = strtoul(input[1].c_str(), 0, 16);
 
@@ -327,38 +393,41 @@ int main(int argc, char *argv[])
         {
             l2_field = addBits(hexAd, l2_bits.tagBit, l2_bits.indexBit);
         }
-        //std::cout << "l1 field: " << l1_field.tBits << std::endl;
-        //std::cout << std::hex << "address: "<< l1_field.adrBits << std::endl;
 
         tags.push_back(l1_field.tBits);
-        //std::cout << std::hex << "tag: " << l1_field.tBits << std::endl;
-        // std::cout << std::dec << "index: " << l1_field.iBits << std::endl;
 
         if (my_cache.L1_ASSOC == 1 && my_cache.L2_ASSOC == 0)
         {
-            asoc_combo_1(input, &my_cache, L1_cache_set, i);
+            asoc_combo_1(input, &my_cache, i);
         }
         else if (my_cache.L1_ASSOC == 2 && my_cache.L2_ASSOC == 0)
         {
-            asoc_combo_2(input, &my_cache, L1_cache_set, i);
+            asoc_combo_2(input, &my_cache, i);
         }
+
         else if (my_cache.L1_ASSOC == 2 && my_cache.L2_ASSOC == 4)
         {
-            asoc_combo_3(input, &my_cache, L1_cache_set, i);
+            asoc_combo_3(input, &my_cache, i);
         }
         else if (my_cache.L1_ASSOC == 1 && my_cache.L2_ASSOC == 4)
         {
-            asoc_combo_4(input, &my_cache, L1_cache_set, i);
+            asoc_combo_4(input, &my_cache, i);
+        }
+        else if (L1_cache_set == 1)
+        {
+            asoc_combo_full(input, &my_cache, i);
         }
 
-        //std::cout << std::dec << "l1 cache content at: " << l1_field.iBits << "\t" << l1_way.one_way[l1_field.iBits] << std::endl;
-        /*if(i == 12){
-            break;
-        }*/
+        else if (my_cache.L1_ASSOC == 4 && my_cache.L2_ASSOC == 0)
+        {
+            asoc_combo_5(input, &my_cache, i);
+        }
+        else if (my_cache.L1_ASSOC == 8 && my_cache.L2_ASSOC == 0)
+        {
+            asoc_combo_6(input, &my_cache, i);
+        }
     }
-    /*for(int i = 0; i < l1_lru.one_way.size(); i++){
-        std::cout << std::dec << "lru" << i << ": " << l1_lru.one_way[i] << "\t" << l1_lru.two_way[i] << std::endl;
-    }*/
+
     std::string r_policy, i_policy;
     if (my_cache.REPLACEMENT_POLICY == 0)
     {
@@ -444,6 +513,45 @@ int main(int argc, char *argv[])
         }
     }
 
+    else if(my_cache.L1_ASSOC == 4 && my_cache.L2_ASSOC == 0){
+        std::cout << "===== L1 contents =====" << std::endl;
+        for (int i = 0; i < l1_way.one_way.size(); i++)
+        {
+            std::cout << std::dec << "Set\t" << i << ":\t";
+            std::cout << std::hex 
+            << l1_way.one_way[i] << "  " << l1_dirty_bit.one_way[i] << "    " 
+            << l1_way.two_way[i] << "  " << l1_dirty_bit.two_way[i] << "   "
+            << l1_way.third_way[i] << "  " << l1_dirty_bit.third_way[i] << "   "
+            << l1_way.forth_way[i] << "  " << l1_dirty_bit.forth_way[i] << std::endl;
+        }
+    }
+
+    else if(my_cache.L1_ASSOC == 8 && my_cache.L2_ASSOC == 0){
+        std::cout << "===== L1 contents =====" << std::endl;
+        for (int i = 0; i < l1_way.one_way.size(); i++)
+        {
+            std::cout << std::dec << "Set\t" << i << ":\t";
+            std::cout << std::hex 
+            << l1_way.one_way[i] << "  " << l1_dirty_bit.one_way[i] << "    " 
+            << l1_way.two_way[i] << "  " << l1_dirty_bit.two_way[i] << "   "
+            << l1_way.third_way[i] << "  " << l1_dirty_bit.third_way[i] << "   "
+            << l1_way.forth_way[i] << "  " << l1_dirty_bit.forth_way[i] 
+            << l1_way.six_way[i] << "  " << l1_dirty_bit.six_way[i]
+            << l1_way.seven_way[i] << "  " << l1_dirty_bit.seven_way[i] 
+            << l1_way.eight_way[i] << "  " << l1_dirty_bit.eight_way[i] 
+            << std::endl;
+        }
+    }
+
+    else if(L1_cache_set == 1){
+        for(int i = 0;i < l1_ful_asoc.size(); i++){
+            std::cout << std::dec << "Way\t" << i << ":\t";
+            std::cout << std::hex
+            << l1_ful_asoc[i] << "  " << l1_ful_dirtyBit[i]
+            << std::endl;
+        }
+    }
+
     l1_stats.miss_rate = (double)(l1_stats.cache_read_miss + l1_stats.cache_write_miss) / (double)(l1_stats.cache_write + l1_stats.cache_read);
 
     if (my_cache.L2_SIZE != 0)
@@ -495,11 +603,9 @@ int main(int argc, char *argv[])
     std::cout << std::dec
               << "l. number of L2 writebacks:" << l2_stats.cache_write_back << std::endl;
     std::cout << std::dec << "m. total memory traffic: " << traffic << std::endl;
-    std::cout << "file line: " << cc << std::endl;
+
     return 0;
 }
-
-// END main //
 
 struct BIT calcBit(unsigned int set, unsigned int blocksize)
 {
@@ -512,17 +618,6 @@ struct BIT calcBit(unsigned int set, unsigned int blocksize)
     return a;
 }
 
-/*struct split_address extractBit(unsigned int address,unsigned int tagBit,unsigned int indexBit){
-    struct split_address a;
-    unsigned int mask;
-    mask = ((1 << tagBit) - 1) << 1;
-    a.tagValue = address & mask;
-    unsigned int indxAdd = address - a.tagValue;
-    mask = ((1 << indexBit) - 1) << 1;
-    a.indexValue = indxAdd & mask;
-     //std::cout << a.indexValue << std::endl;
-    return a;
-}*/
 struct addressInBits addBits(unsigned int address_bits, unsigned int tag_bits, unsigned int index_bits)
 {
     addressInBits a;
@@ -536,13 +631,13 @@ struct addressInBits addBits(unsigned int address_bits, unsigned int tag_bits, u
     a.tBits = adrTag.to_ulong();
 
     std::bitset<32> adrIdx(mystring, tag_bits, index_bits);
-    //std::cout << "ibits " << adrIdx << std::endl;
+
     a.iBits = adrIdx.to_ulong();
 
     return a;
 }
 
-void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count)
+void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, int count)
 {
     // operation read //
     int ref = 0;
@@ -552,11 +647,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
         // HIT CASE
         if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
         {
-            //std::cout << std::dec << "***cache read hit***" << std::endl;
-            //std::cout << std::hex << "****" << l1_way.one_way[l1_field.iBits] << "****" << std::endl;
-            //std::cout << std::hex << "****" << l1_field.tBits << "****" << std::endl;
             l1_stats.cache_read++;
-            // moidfy lru counter
 
             if (cp->REPLACEMENT_POLICY == 0)
             {
@@ -571,7 +662,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write_back++;
                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                traffic++; //traffic because writeback
+                traffic++;
             }
             l1_stats.cache_read_miss++;
             traffic++;
@@ -596,8 +687,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l1_vld.clmn1[l1_field.iBits] = " ";
                     }
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
-                    traffic++; //traffic because read
-                               // moidfy lru counter
+                    traffic++;
                     if (cp->REPLACEMENT_POLICY == 0)
                     {
                         l2_lru.one_way[l2_field.iBits] += 1;
@@ -608,7 +698,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
                         l1_vld.clmn1[l1_field.iBits] = " ";
@@ -657,7 +747,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         }
 
                         l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        l2_ref.one_way[l2_field.iBits] = l2_field.tBits; // saving l1 tag to use when setting invalid...
+                        l2_ref.one_way[l2_field.iBits] = l2_field.tBits;
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
                             l1_vld.clmn1[l1_field.iBits] = " ";
@@ -676,12 +766,10 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
         // HIT CASE
         if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
         {
-            //std::cout << std::dec << "***cache read hit***" << std::endl;
-            //std::cout << std::hex << "****" << l1_way.one_way[l1_field.iBits] << "****" << std::endl;
-            //std::cout << std::hex << "****" << l1_field.tBits << "****" << std::endl;
+
             l1_stats.cache_write++;
             l1_dirty_bit.one_way[l1_field.iBits] = "D";
-            // moidfy lru counter
+
             if (cp->REPLACEMENT_POLICY == 0)
             {
                 l1_lru.one_way[l1_field.iBits] += 1;
@@ -695,7 +783,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write_back++;
                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                traffic++; //traffic because writeback
+                traffic++;
             }
             l1_stats.cache_write_miss++;
             traffic++;
@@ -724,7 +812,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     }
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     traffic++; //traffic because read
-                               // moidfy lru counter
+
                     if (cp->REPLACEMENT_POLICY == 0)
                     {
                         l2_lru.one_way[l2_field.iBits] += 1;
@@ -736,7 +824,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_dirty_bit.one_way[l2_field.iBits] = "D";
                     l2_stats.cache_write++;
-                    // moidfy lru counter
+
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
                         l1_vld.clmn1[l1_field.iBits] = " ";
@@ -785,7 +873,7 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         }
 
                         l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        l2_ref.one_way[l2_field.iBits] = l2_field.tBits; // saving l1 tag to use when setting invalid...
+                        l2_ref.one_way[l2_field.iBits] = l2_field.tBits;
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
                             l1_vld.clmn1[l1_field.iBits] = " ";
@@ -798,8 +886,8 @@ void asoc_combo_1(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
     }
 }
 
-// asociativity l1= 2 & l2=0
-void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count)
+// asociativity l1= 2 & l2 = 0
+void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, int count)
 {
 
     // operation read //
@@ -815,14 +903,14 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
             else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                // moidfy lru counter
+
                 l1_lru.two_way[l1_field.iBits] = count;
             }
 
@@ -836,7 +924,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
@@ -850,7 +938,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
@@ -869,7 +957,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
@@ -877,7 +965,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
-                // moidfy lru counter
+
                 l1_lru.two_way[l1_field.iBits] = count;
             }
             // MISS CASE
@@ -886,13 +974,12 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 l1_stats.cache_write_miss++;
                 if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                 {
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
@@ -908,7 +995,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
@@ -932,13 +1019,13 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
             }
 
             else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits;
             }
             // L1 empty block
             else if (l1_way.one_way[l1_field.iBits] == 0)
@@ -947,8 +1034,8 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                 l1_stats.cache_read_miss++;
                 l1_stats.cache_read++;
-                
-                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
             }
 
             // L1 empty block
@@ -958,7 +1045,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                 l1_stats.cache_read_miss++;
                 l1_stats.cache_read++;
-                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits;
             }
 
             // L1 miss case
@@ -988,13 +1075,13 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_read++;
-                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
                 }
 
                 else if (ref_oneWay == 1)
@@ -1004,13 +1091,13 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
                     l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_read++;
-                    l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                    l1_optimal.two_way[l1_field.iBits] = l1_field.tBits;
                 }
 
                 else if (ref_oneWay == 0)
@@ -1020,13 +1107,13 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_read++;
-                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
                 }
             }
         }
@@ -1039,29 +1126,27 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
-                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
-                // moidfy lru counter
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
             }
 
             else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
-                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
-                // moidfy lru counter
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits;
             }
             // MISS CASE
 
             else if (l1_way.one_way[l1_field.iBits] == 0)
             {
                 traffic++;
-                
+
                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                 l1_stats.cache_write_miss++;
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
                 l1_lru.one_way[l1_field.iBits] = count;
-                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
             }
             else if (l1_way.two_way[l1_field.iBits] == 0)
             {
@@ -1071,7 +1156,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 l1_stats.cache_write++;
                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
                 l1_lru.two_way[l1_field.iBits] = count;
-                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                l1_optimal.two_way[l1_field.iBits] = l1_field.tBits;
             }
 
             else
@@ -1095,15 +1180,14 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 }
                 if (ref_oneWay == 2)
                 {
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
-                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_write++;
@@ -1117,9 +1201,9 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
-                    l1_optimal.two_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                    l1_optimal.two_way[l1_field.iBits] = l1_field.tBits;
                     traffic++;
                     l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_write++;
@@ -1129,15 +1213,14 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                 else if (ref_oneWay == 0)
                 {
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
-                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits; //adr[1];
+                    l1_optimal.one_way[l1_field.iBits] = l1_field.tBits;
                     traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_write++;
@@ -1149,7 +1232,7 @@ void asoc_combo_2(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
     }
 }
 
-void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count)
+void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, int count)
 {
     int ref = 0;
     if (cp->REPLACEMENT_POLICY == 0 && cp->INCLUSION_PROPERTY == 0)
@@ -1161,18 +1244,17 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
             else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                // moidfy lru counter
+
                 l1_lru.two_way[l1_field.iBits] = count;
             }
 
-            // MISS CASE
             else
             {
 
@@ -1181,7 +1263,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.one_way[l2_field.iBits] = count;
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                     {
@@ -1189,7 +1271,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1203,7 +1285,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1216,7 +1298,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.two_way[l2_field.iBits] = count;
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                     {
@@ -1224,7 +1306,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1238,7 +1320,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1250,7 +1332,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.third_way[l2_field.iBits] = count;
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                     {
@@ -1258,7 +1340,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1272,7 +1354,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1284,7 +1366,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.forth_way[l2_field.iBits] = count;
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                     {
@@ -1292,10 +1374,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -1306,10 +1387,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.two_way[l1_field.iBits] = count;
@@ -1329,7 +1409,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1342,10 +1422,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.one_way[l1_field.iBits] = count;
@@ -1356,10 +1435,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.two_way[l1_field.iBits] = count;
@@ -1371,7 +1449,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1384,10 +1462,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.one_way[l1_field.iBits] = count;
@@ -1398,10 +1475,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.two_way[l1_field.iBits] = count;
@@ -1414,7 +1490,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1427,10 +1503,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            // traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.one_way[l1_field.iBits] = count;
@@ -1441,10 +1516,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.two_way[l1_field.iBits] = count;
@@ -1457,7 +1531,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1471,10 +1545,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            // traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.one_way[l1_field.iBits] = count;
@@ -1485,10 +1558,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            // traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.two_way[l1_field.iBits] = count;
@@ -1506,7 +1578,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
@@ -1514,7 +1586,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
-                // moidfy lru counter
+
                 l1_lru.two_way[l1_field.iBits] = count;
             }
             // MISS CASE
@@ -1526,7 +1598,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.one_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.one_way[l2_field.iBits] = count;
 
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
@@ -1537,7 +1609,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -1552,7 +1624,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -1566,18 +1638,17 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.two_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.two_way[l2_field.iBits] = count;
 
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -1592,7 +1663,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -1605,18 +1676,17 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.third_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.third_way[l2_field.iBits] = count;
 
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -1631,7 +1701,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -1644,18 +1714,17 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.forth_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.forth_way[l2_field.iBits] = count;
 
                     if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -1670,7 +1739,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -1687,13 +1756,12 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                                                                                                      l2_lru.forth_way[l2_field.iBits])));
                     if (ref == l2_lru.one_way[l2_field.iBits])
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l2_dirty_bit.one_way[l2_field.iBits] == "D")
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1704,16 +1772,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -1726,10 +1792,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -1743,7 +1808,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1754,16 +1819,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -1776,10 +1839,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -1793,7 +1855,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1804,16 +1866,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            // traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -1826,10 +1886,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -1843,7 +1902,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -1854,16 +1913,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            // traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -1876,10 +1933,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            //traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_write++;
                             l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -1900,14 +1956,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 if (l1_field.tBits == l1_way.one_way[l1_field.iBits] && l1_vld.clmn1[l1_field.iBits] != "invalid")
                 {
                     l1_stats.cache_read++;
-                    // moidfy lru counter
+
                     l1_lru.one_way[l1_field.iBits] = count;
                 }
 
                 else if (l1_field.tBits == l1_way.two_way[l1_field.iBits] && l1_vld.clmn2[l1_field.iBits] != "invalid")
                 {
                     l1_stats.cache_read++;
-                    // moidfy lru counter
+
                     l1_lru.two_way[l1_field.iBits] = count;
                 }
 
@@ -1920,8 +1976,8 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                     {
                         l2_stats.cache_read++;
-                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                        // moidfy lru counter
+                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
+
                         l2_lru.one_way[l2_field.iBits] = count;
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
@@ -1929,7 +1985,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -1944,7 +2000,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -1959,7 +2015,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -1973,7 +2029,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -1986,8 +2042,8 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
                     {
                         l2_stats.cache_read++;
-                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                        // moidfy lru counter
+                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
+
                         l2_lru.two_way[l2_field.iBits] = count;
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
@@ -1995,7 +2051,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2010,7 +2066,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2025,7 +2081,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2039,7 +2095,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2051,8 +2107,8 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
                     {
                         l2_stats.cache_read++;
-                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                        // moidfy lru counter
+                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
+
                         l2_lru.third_way[l2_field.iBits] = count;
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
@@ -2060,7 +2116,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2075,7 +2131,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2090,7 +2146,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2104,7 +2160,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2116,8 +2172,8 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
                     {
                         l2_stats.cache_read++;
-                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                        // moidfy lru counter
+                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
+
                         l2_lru.forth_way[l2_field.iBits] = count;
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
@@ -2125,7 +2181,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2140,7 +2196,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             traffic++;
@@ -2155,10 +2211,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            // traffic++;
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.one_way[l1_field.iBits] = count;
@@ -2169,10 +2224,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
-                            // traffic++;
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                             l1_stats.cache_read++;
                             l1_lru.two_way[l1_field.iBits] = count;
@@ -2193,7 +2247,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
                             {
@@ -2210,7 +2264,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             }
                             traffic++;
                             l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                            l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
                             l2_stats.cache_read++;
                             l2_lru.one_way[l2_field.iBits] = count;
                             if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
@@ -2219,10 +2273,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.one_way[l1_field.iBits] = count;
@@ -2233,10 +2286,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.two_way[l1_field.iBits] = count;
@@ -2248,7 +2300,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
                             {
@@ -2265,7 +2317,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             }
                             traffic++;
                             l2_way.two_way[l2_field.iBits] = l2_field.tBits;
-                            l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
                             l2_stats.cache_read++;
                             l2_lru.two_way[l2_field.iBits] = count;
                             if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
@@ -2274,10 +2326,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.one_way[l1_field.iBits] = count;
@@ -2288,10 +2339,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.two_way[l1_field.iBits] = count;
@@ -2304,7 +2354,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
                             {
@@ -2321,7 +2371,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             }
                             traffic++;
                             l2_way.third_way[l2_field.iBits] = l2_field.tBits;
-                            l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
                             l2_stats.cache_read++;
                             l2_lru.third_way[l2_field.iBits] = count;
                             if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
@@ -2330,10 +2380,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                // traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.one_way[l1_field.iBits] = count;
@@ -2344,10 +2393,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.two_way[l1_field.iBits] = count;
@@ -2360,7 +2408,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
                             {
@@ -2378,7 +2426,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                             traffic++;
                             l2_way.forth_way[l2_field.iBits] = l2_field.tBits;
-                            l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
                             l2_stats.cache_read++;
                             l2_lru.forth_way[l2_field.iBits] = count;
 
@@ -2388,10 +2436,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                // traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.one_way[l1_field.iBits] = count;
@@ -2402,10 +2449,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                // traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_read++;
                                 l1_lru.two_way[l1_field.iBits] = count;
@@ -2423,7 +2469,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l1_stats.cache_write++;
                     l1_dirty_bit.one_way[l1_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l1_lru.one_way[l1_field.iBits] = count;
                 }
 
@@ -2431,7 +2477,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l1_stats.cache_write++;
                     l1_dirty_bit.two_way[l1_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l1_lru.two_way[l1_field.iBits] = count;
                 }
                 // MISS CASE
@@ -2443,19 +2489,18 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                     {
                         l2_stats.cache_write++;
-                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
                         l2_dirty_bit.one_way[l2_field.iBits] = "D";
-                        // moidfy lru counter
+
                         l2_lru.one_way[l2_field.iBits] = count;
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2470,7 +2515,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2481,13 +2526,12 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2502,7 +2546,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2515,20 +2559,19 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
                     {
                         l2_stats.cache_write++;
-                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
                         l2_dirty_bit.two_way[l2_field.iBits] = "D";
-                        // moidfy lru counter
+
                         l2_lru.two_way[l2_field.iBits] = count;
 
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2543,7 +2586,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2554,13 +2597,12 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2575,7 +2617,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2587,20 +2629,19 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
                     {
                         l2_stats.cache_write++;
-                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
                         l2_dirty_bit.third_way[l2_field.iBits] = "D";
-                        // moidfy lru counter
+
                         l2_lru.third_way[l2_field.iBits] = count;
 
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2615,7 +2656,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2632,7 +2673,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2647,7 +2688,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2659,20 +2700,19 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                     else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
                     {
                         l2_stats.cache_write++;
-                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
                         l2_dirty_bit.forth_way[l2_field.iBits] = "D";
-                        // moidfy lru counter
+
                         l2_lru.forth_way[l2_field.iBits] = count;
 
                         if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2687,7 +2727,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2698,13 +2738,12 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         else if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -2719,7 +2758,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l1_stats.cache_write_back++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             l1_way.two_way[l1_field.iBits] = l1_field.tBits;
@@ -2736,13 +2775,12 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                                                                                                          l2_lru.forth_way[l2_field.iBits])));
                         if (ref == l2_lru.one_way[l2_field.iBits])
                         {
-                            //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                            //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                             if (l2_dirty_bit.one_way[l2_field.iBits] == "D")
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
                             {
@@ -2758,7 +2796,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 }
                             }
                             traffic++;
-                            l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
                             l2_way.one_way[l2_field.iBits] = l2_field.tBits;
                             l2_stats.cache_write++;
                             l2_dirty_bit.one_way[l2_field.iBits] = "D";
@@ -2766,16 +2804,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                             if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                             {
-                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                                 if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -2788,10 +2824,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -2805,7 +2840,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
@@ -2822,7 +2857,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 }
                             }
                             traffic++;
-                            l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
                             l2_way.two_way[l2_field.iBits] = l2_field.tBits;
                             l2_stats.cache_write++;
                             l2_dirty_bit.two_way[l2_field.iBits] = "D";
@@ -2830,16 +2865,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                             if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                             {
-                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                                 if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -2852,10 +2885,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -2869,7 +2901,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
@@ -2886,7 +2918,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 }
                             }
                             traffic++;
-                            l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
                             l2_way.third_way[l2_field.iBits] = l2_field.tBits;
                             l2_stats.cache_write++;
                             l2_dirty_bit.third_way[l2_field.iBits] = "D";
@@ -2894,16 +2926,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                             if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                             {
-                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                                 if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                // traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -2916,10 +2946,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -2933,7 +2962,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             {
                                 l2_stats.cache_write_back++;
                                 l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                                traffic++; //traffic because writeback
+                                traffic++;
                             }
 
                             for (int i = 0; i < l1_way.one_way.size(); ++i)
@@ -2950,7 +2979,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 }
                             }
                             traffic++;
-                            l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                            l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
                             l2_way.forth_way[l2_field.iBits] = l2_field.tBits;
                             l2_stats.cache_write++;
                             l2_dirty_bit.forth_way[l2_field.iBits] = "D";
@@ -2958,16 +2987,14 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                             if (l1_lru.one_way[l1_field.iBits] <= l1_lru.two_way[l1_field.iBits])
                             {
-                                //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                                //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                                 if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                // traffic++;
                                 l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -2980,10 +3007,9 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                 {
                                     l1_stats.cache_write_back++;
                                     l1_dirty_bit.two_way[l1_field.iBits] = " ";
-                                    traffic++; //traffic because writeback
+                                    traffic++;
                                 }
 
-                                //traffic++;
                                 l1_way.two_way[l1_field.iBits] = l1_field.tBits;
                                 l1_stats.cache_write++;
                                 l1_dirty_bit.two_way[l1_field.iBits] = "D";
@@ -2997,7 +3023,7 @@ void asoc_combo_3(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
     }
 }
 
-void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int setNum, int count)
+void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, int count)
 {
     int ref = 0;
     if (cp->REPLACEMENT_POLICY == 0 && cp->INCLUSION_PROPERTY == 0)
@@ -3009,7 +3035,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
             {
                 l1_stats.cache_read++;
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
@@ -3022,14 +3048,14 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.one_way[l2_field.iBits] = count;
 
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
@@ -3041,14 +3067,14 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.two_way[l2_field.iBits] = count;
 
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
@@ -3059,14 +3085,14 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.third_way[l2_field.iBits] = count;
 
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     traffic++;
@@ -3077,17 +3103,16 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    // moidfy lru counter
+
                     l2_lru.forth_way[l2_field.iBits] = count;
 
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
-                    // traffic++;
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                     l1_stats.cache_read++;
                     l1_lru.one_way[l1_field.iBits] = count;
@@ -3106,7 +3131,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3118,10 +3143,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3132,7 +3156,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3144,10 +3168,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3159,7 +3182,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3171,10 +3194,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3186,7 +3208,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3198,10 +3220,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3218,7 +3239,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
@@ -3231,16 +3252,14 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.one_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.one_way[l2_field.iBits] = count;
 
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3253,16 +3272,14 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.two_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.two_way[l2_field.iBits] = count;
 
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3274,16 +3291,14 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.third_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.third_way[l2_field.iBits] = count;
 
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3295,16 +3310,14 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 {
                     l2_stats.cache_write++;
                     l2_dirty_bit.forth_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.forth_way[l2_field.iBits] = count;
 
-                    //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                    //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                     if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                     {
                         l1_stats.cache_write_back++;
                         l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                        traffic++; //traffic because writeback
+                        traffic++;
                     }
 
                     l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3320,13 +3333,12 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                                                                                                      l2_lru.forth_way[l2_field.iBits])));
                     if (ref == l2_lru.one_way[l2_field.iBits])
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l2_dirty_bit.one_way[l2_field.iBits] == "D")
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3335,16 +3347,13 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l2_dirty_bit.one_way[l2_field.iBits] = "D";
                         l2_lru.one_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -3357,7 +3366,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3366,16 +3375,13 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l2_dirty_bit.two_way[l2_field.iBits] = "D";
                         l2_lru.two_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -3388,7 +3394,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3397,16 +3403,13 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l2_dirty_bit.third_way[l2_field.iBits] = "D";
                         l2_lru.third_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -3419,7 +3422,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3428,16 +3431,13 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         l2_dirty_bit.forth_way[l2_field.iBits] = "D";
                         l2_lru.forth_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -3458,7 +3458,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             if (l1_field.tBits == l1_way.one_way[l1_field.iBits] && l1_vld.clmn1[l1_field.iBits] != "invalid")
             {
                 l1_stats.cache_read++;
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
@@ -3471,8 +3471,8 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                    // moidfy lru counter
+                    l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
+
                     l2_lru.one_way[l2_field.iBits] = count;
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
@@ -3480,7 +3480,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3496,7 +3496,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3509,8 +3509,8 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                    // moidfy lru counter
+                    l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
+
                     l2_lru.two_way[l2_field.iBits] = count;
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
@@ -3518,7 +3518,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3534,7 +3534,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3546,8 +3546,8 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                    // moidfy lru counter
+                    l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
+
                     l2_lru.third_way[l2_field.iBits] = count;
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
@@ -3555,7 +3555,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3571,7 +3571,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3583,8 +3583,8 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
                 {
                     l2_stats.cache_read++;
-                    l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
-                    // moidfy lru counter
+                    l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
+
                     l2_lru.forth_way[l2_field.iBits] = count;
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
@@ -3592,7 +3592,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         traffic++;
@@ -3608,10 +3608,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3632,7 +3631,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
                         {
@@ -3644,7 +3643,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         }
                         traffic++;
                         l2_way.one_way[l2_field.iBits] = l2_field.tBits;
-                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
                         l2_stats.cache_read++;
                         l2_lru.one_way[l2_field.iBits] = count;
 
@@ -3652,10 +3651,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3666,7 +3664,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
                         {
@@ -3678,7 +3676,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         }
                         traffic++;
                         l2_way.two_way[l2_field.iBits] = l2_field.tBits;
-                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
                         l2_stats.cache_read++;
                         l2_lru.two_way[l2_field.iBits] = count;
 
@@ -3686,10 +3684,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3701,7 +3698,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
                         {
@@ -3713,7 +3710,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         }
                         traffic++;
                         l2_way.third_way[l2_field.iBits] = l2_field.tBits;
-                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
                         l2_stats.cache_read++;
                         l2_lru.third_way[l2_field.iBits] = count;
 
@@ -3721,10 +3718,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3736,7 +3732,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
                         {
@@ -3749,7 +3745,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                         traffic++;
                         l2_way.forth_way[l2_field.iBits] = l2_field.tBits;
-                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
                         l2_stats.cache_read++;
                         l2_lru.forth_way[l2_field.iBits] = count;
 
@@ -3757,10 +3753,9 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_read++;
                         l1_lru.one_way[l1_field.iBits] = count;
@@ -3777,7 +3772,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
             {
                 l1_stats.cache_write++;
                 l1_dirty_bit.one_way[l1_field.iBits] = "D";
-                // moidfy lru counter
+
                 l1_lru.one_way[l1_field.iBits] = count;
             }
 
@@ -3790,19 +3785,18 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 if (l2_field.tBits == l2_way.one_way[l2_field.iBits])
                 {
                     l2_stats.cache_write++;
-                    l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                    l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
                     l2_dirty_bit.one_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.one_way[l2_field.iBits] = count;
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3819,7 +3813,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3832,20 +3826,19 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.two_way[l2_field.iBits])
                 {
                     l2_stats.cache_write++;
-                    l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                    l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
                     l2_dirty_bit.two_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.two_way[l2_field.iBits] = count;
 
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3856,13 +3849,12 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                     else
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3874,20 +3866,19 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.third_way[l2_field.iBits])
                 {
                     l2_stats.cache_write++;
-                    l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                    l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
                     l2_dirty_bit.third_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.third_way[l2_field.iBits] = count;
 
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3898,13 +3889,12 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                     else
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3916,20 +3906,19 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                 else if (l2_field.tBits == l2_way.forth_way[l2_field.iBits])
                 {
                     l2_stats.cache_write++;
-                    l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                    l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
                     l2_dirty_bit.forth_way[l2_field.iBits] = "D";
-                    // moidfy lru counter
+
                     l2_lru.forth_way[l2_field.iBits] = count;
 
                     if (l1_vld.clmn1[l1_field.iBits] == "invalid")
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3940,13 +3929,12 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
 
                     else
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
@@ -3963,13 +3951,12 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                                                                                                                      l2_lru.forth_way[l2_field.iBits])));
                     if (ref == l2_lru.one_way[l2_field.iBits])
                     {
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
+
                         if (l2_dirty_bit.one_way[l2_field.iBits] == "D")
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.one_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
                         {
@@ -3980,22 +3967,19 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             }
                         }
                         traffic++;
-                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.one_way[l1_field.iBits] = l1_field.tBits;
                         l2_way.one_way[l2_field.iBits] = l2_field.tBits;
                         l2_stats.cache_write++;
                         l2_dirty_bit.one_way[l2_field.iBits] = "D";
                         l2_lru.one_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -4008,7 +3992,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.two_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
@@ -4020,22 +4004,19 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             }
                         }
                         traffic++;
-                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.two_way[l1_field.iBits] = l1_field.tBits;
                         l2_way.two_way[l2_field.iBits] = l2_field.tBits;
                         l2_stats.cache_write++;
                         l2_dirty_bit.two_way[l2_field.iBits] = "D";
                         l2_lru.two_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        //traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -4048,7 +4029,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.third_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
@@ -4060,22 +4041,19 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             }
                         }
                         traffic++;
-                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.third_way[l1_field.iBits] = l1_field.tBits;
                         l2_way.third_way[l2_field.iBits] = l2_field.tBits;
                         l2_stats.cache_write++;
                         l2_dirty_bit.third_way[l2_field.iBits] = "D";
                         l2_lru.third_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -4088,7 +4066,7 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                         {
                             l2_stats.cache_write_back++;
                             l2_dirty_bit.forth_way[l2_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
                         for (int i = 0; i < l1_way.one_way.size(); ++i)
@@ -4100,22 +4078,19 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
                             }
                         }
                         traffic++;
-                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits; // keep track of corresponding l1 replaced value
+                        l2_inc.forth_way[l1_field.iBits] = l1_field.tBits;
                         l2_way.forth_way[l2_field.iBits] = l2_field.tBits;
                         l2_stats.cache_write++;
                         l2_dirty_bit.forth_way[l2_field.iBits] = "D";
                         l2_lru.forth_way[l2_field.iBits] = count;
 
-                        //std::cout << l1_lru.one_way[l1_field.iBits] << std::endl;
-                        //std::cout << l1_lru.two_way[l1_field.iBits] << std::endl;
                         if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
                         {
                             l1_stats.cache_write_back++;
                             l1_dirty_bit.one_way[l1_field.iBits] = " ";
-                            traffic++; //traffic because writeback
+                            traffic++;
                         }
 
-                        // traffic++;
                         l1_way.one_way[l1_field.iBits] = l1_field.tBits;
                         l1_stats.cache_write++;
                         l1_dirty_bit.one_way[l1_field.iBits] = "D";
@@ -4127,7 +4102,733 @@ void asoc_combo_4(std::vector<std::string> adr, struct CACHE *cp, unsigned int s
     }
 }
 
-/*
-100000000000000101110
-100000000000000101110
-*/
+void asoc_combo_full(std::vector<std::string> adr, struct CACHE *cp, int count)
+{
+    bool flag = false;
+    unsigned int way = 0;
+    int min = l1_ful_lru[0];
+    if (cp->REPLACEMENT_POLICY == 0)
+    {
+        if (adr[0] == "r")
+        {
+            for (int i = 0; i < l1_ful_asoc.size(); i++)
+            {
+                if (l1_ful_asoc[i] == l1_field.tBits)
+                {
+                    l1_stats.cache_read++;
+                    l1_ful_lru[i] = count;
+                    flag = true;
+                    break;
+                }
+                else if (l1_ful_asoc[i] == 0)
+                {
+                    l1_stats.cache_read_miss++;
+                    l1_stats.cache_read++;
+                    l1_ful_asoc[i] = l1_field.tBits;
+                    l1_ful_lru[i] = count;
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag == false)
+            {
+                l1_stats.cache_read_miss++;
+                for (int i = 0; i < l1_ful_lru.size(); i++)
+                {
+                    if (l1_ful_lru[i] < min)
+                    {
+                        min = l1_ful_lru[i];
+                        way = i;
+                    }
+                }
+                if (l1_ful_dirtyBit[way] == "D")
+                {
+                    l1_stats.cache_write_back++;
+                    l1_ful_dirtyBit[way] = " ";
+                }
+
+                l1_stats.cache_read_miss++;
+                l1_stats.cache_read++;
+                l1_ful_asoc[way] = l1_field.tBits;
+                l1_ful_lru[way] = count;
+            }
+        }
+
+        else if (adr[0] == "w")
+        {
+            for (int i = 0; i < l1_ful_asoc.size(); i++)
+            {
+                if (l1_ful_asoc[i] == l1_field.tBits)
+                {
+                    l1_stats.cache_write++;
+                    l1_ful_dirtyBit[i] = "D";
+                     l1_ful_lru[i] = count;
+                    flag = true;
+                    break;
+                }
+                else if (l1_ful_asoc[i] == 0)
+                {
+
+                    l1_stats.cache_write_miss++;
+                    l1_stats.cache_write++;
+
+                    l1_ful_asoc[i] = l1_field.tBits;
+                    l1_ful_dirtyBit[i] = "D";
+                     l1_ful_lru[i] = count;
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag == false)
+            {
+                l1_stats.cache_write_miss++;
+                for (int i = 0; i < l1_ful_lru.size(); i++)
+                {
+                    if (l1_ful_lru[i] < min)
+                    {
+                        min = l1_ful_lru[i];
+                        way = i;
+                    }
+                }
+                if (l1_ful_dirtyBit[way] == "D")
+                {
+                    l1_stats.cache_write_back++;
+                    l1_ful_dirtyBit[way] = " ";
+                }
+
+                l1_stats.cache_write_miss++;
+                l1_stats.cache_write++;
+                l1_ful_asoc[way] = l1_field.tBits;
+                l1_ful_dirtyBit[way] = "D";
+                l1_ful_lru[way] = count;
+            }
+        }
+    }
+}
+
+void asoc_combo_5(std::vector<std::string> adr, struct CACHE *cp, int count)
+{
+    // operation read //
+    int ref = 0;
+    int ref_oneWay = 0;
+
+    if (cp->REPLACEMENT_POLICY == 0 || cp->REPLACEMENT_POLICY == 1)
+    {
+
+        if (adr[0] == "r")
+        {
+            // HIT CASE
+            if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.one_way[l1_field.iBits] = count;
+            }
+
+            else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.two_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.third_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.third_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.forth_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.forth_way[l1_field.iBits] = count;
+            }
+
+            // MISS CASE
+            else
+            {
+                l1_stats.cache_read_miss++;
+                ref = std::min(l1_lru.one_way[l1_field.iBits], std::min(l1_lru.two_way[l1_field.iBits], std::min(l1_lru.third_way[l1_field.iBits],
+                                                                                                                 l1_lru.forth_way[l1_field.iBits])));
+
+                if (ref == l1_lru.one_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.one_way[l1_field.iBits] = count;
+                }
+                else if (ref == l1_lru.two_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.two_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.third_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.third_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.third_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.third_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.third_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.forth_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.forth_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.forth_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.forth_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.forth_way[l1_field.iBits] = count;
+                }
+            }
+        }
+
+        // WRTIE OPERATION
+        else if (adr[0] == "w")
+        {
+            // HIT CASE
+            if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.one_way[l1_field.iBits] = "D";
+
+                l1_lru.one_way[l1_field.iBits] = count;
+            }
+
+            else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.two_way[l1_field.iBits] = "D";
+
+                l1_lru.two_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.third_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.third_way[l1_field.iBits] = "D";
+
+                l1_lru.third_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.forth_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.forth_way[l1_field.iBits] = "D";
+
+                l1_lru.forth_way[l1_field.iBits] = count;
+            }
+
+            // MISS CASE
+            else
+            {
+
+                l1_stats.cache_write_miss++;
+
+                ref = std::min(l1_lru.one_way[l1_field.iBits], std::min(l1_lru.two_way[l1_field.iBits], std::min(l1_lru.third_way[l1_field.iBits],
+                                                                                                                 l1_lru.forth_way[l1_field.iBits])));
+
+                if (ref == l1_lru.one_way[l1_field.iBits])
+                {
+
+                    if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                    l1_lru.one_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.two_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                    l1_lru.two_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.third_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.third_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.third_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.third_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.third_way[l1_field.iBits] = "D";
+                    l1_lru.third_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.forth_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.forth_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.forth_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.forth_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.forth_way[l1_field.iBits] = "D";
+                    l1_lru.forth_way[l1_field.iBits] = count;
+                }
+            }
+        }
+    }
+}
+
+void asoc_combo_6(std::vector<std::string> adr, struct CACHE *cp, int count)
+{
+    // operation read //
+    int ref = 0;
+    int ref1 = 0;
+    int ref2 = 0;
+    int ref_oneWay = 0;
+
+    if (cp->REPLACEMENT_POLICY == 0 || cp->REPLACEMENT_POLICY == 1)
+    {
+
+        if (adr[0] == "r")
+        {
+            // HIT CASE
+            if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.one_way[l1_field.iBits] = count;
+            }
+
+            else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.two_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.third_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.third_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.forth_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.forth_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.five_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.five_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.six_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.six_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.seven_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.seven_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.eight_way[l1_field.iBits])
+            {
+                l1_stats.cache_read++;
+
+                l1_lru.eight_way[l1_field.iBits] = count;
+            }
+
+            // MISS CASE
+            else
+            {
+                l1_stats.cache_read_miss++;
+                ref1 = std::min(l1_lru.one_way[l1_field.iBits], std::min(l1_lru.two_way[l1_field.iBits], std::min(l1_lru.third_way[l1_field.iBits],
+                                                                                                                  l1_lru.forth_way[l1_field.iBits])));
+
+                ref2 = std::min(l1_lru.five_way[l1_field.iBits], std::min(l1_lru.six_way[l1_field.iBits], std::min(l1_lru.seven_way[l1_field.iBits],
+                                                                                                                   l1_lru.eight_way[l1_field.iBits])));
+
+                ref = std::min(ref1, ref2);
+
+                if (ref == l1_lru.one_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.one_way[l1_field.iBits] = count;
+                }
+                else if (ref == l1_lru.two_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.two_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.third_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.third_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.third_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.third_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.third_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.forth_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.forth_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.forth_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.forth_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.forth_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.five_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.five_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.five_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.five_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.five_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.six_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.six_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.six_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.six_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.six_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.seven_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.seven_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.seven_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.seven_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.seven_way[l1_field.iBits] = count;
+                }
+                else if (ref == l1_lru.eight_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.eight_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.eight_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.eight_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_read++;
+                    l1_lru.eight_way[l1_field.iBits] = count;
+                }
+            }
+        }
+
+        // WRTIE OPERATION
+        else if (adr[0] == "w")
+        {
+
+            // HIT CASE
+            if (l1_field.tBits == l1_way.one_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.one_way[l1_field.iBits] = "D";
+
+                l1_lru.one_way[l1_field.iBits] = count;
+            }
+
+            else if (l1_field.tBits == l1_way.two_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.two_way[l1_field.iBits] = "D";
+
+                l1_lru.two_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.third_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.third_way[l1_field.iBits] = "D";
+
+                l1_lru.third_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.forth_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.forth_way[l1_field.iBits] = "D";
+
+                l1_lru.forth_way[l1_field.iBits] = count;
+            }
+
+            else if (l1_field.tBits == l1_way.five_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.five_way[l1_field.iBits] = "D";
+
+                l1_lru.five_way[l1_field.iBits] = count;
+            }
+            else if (l1_field.tBits == l1_way.six_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.six_way[l1_field.iBits] = "D";
+
+                l1_lru.six_way[l1_field.iBits] = count;
+            }
+
+            else if (l1_field.tBits == l1_way.seven_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.seven_way[l1_field.iBits] = "D";
+
+                l1_lru.seven_way[l1_field.iBits] = count;
+            }
+
+            else if (l1_field.tBits == l1_way.eight_way[l1_field.iBits])
+            {
+                l1_stats.cache_write++;
+                l1_dirty_bit.eight_way[l1_field.iBits] = "D";
+
+                l1_lru.eight_way[l1_field.iBits] = count;
+            }
+
+            // MISS CASE
+            else
+            {
+
+                l1_stats.cache_write_miss++;
+
+                ref1 = std::min(l1_lru.one_way[l1_field.iBits], std::min(l1_lru.two_way[l1_field.iBits], std::min(l1_lru.third_way[l1_field.iBits],
+                                                                                                                  l1_lru.forth_way[l1_field.iBits])));
+
+                ref2 = std::min(l1_lru.five_way[l1_field.iBits], std::min(l1_lru.six_way[l1_field.iBits], std::min(l1_lru.seven_way[l1_field.iBits],
+                                                                                                                   l1_lru.eight_way[l1_field.iBits])));
+
+                ref = std::min(ref1, ref2);
+
+                if (ref == l1_lru.one_way[l1_field.iBits])
+                {
+
+                    if (l1_dirty_bit.one_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.one_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.one_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.one_way[l1_field.iBits] = "D";
+                    l1_lru.one_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.two_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.two_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.two_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.two_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.two_way[l1_field.iBits] = "D";
+                    l1_lru.two_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.third_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.third_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.third_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.third_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.third_way[l1_field.iBits] = "D";
+                    l1_lru.third_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.forth_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.forth_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.forth_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.forth_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.forth_way[l1_field.iBits] = "D";
+                    l1_lru.forth_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.five_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.five_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.five_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.five_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.five_way[l1_field.iBits] = "D";
+                    l1_lru.five_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.six_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.six_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.six_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.six_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.six_way[l1_field.iBits] = "D";
+                    l1_lru.six_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.seven_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.seven_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.seven_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.seven_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.seven_way[l1_field.iBits] = "D";
+                    l1_lru.seven_way[l1_field.iBits] = count;
+                }
+
+                else if (ref == l1_lru.eight_way[l1_field.iBits])
+                {
+                    if (l1_dirty_bit.eight_way[l1_field.iBits] == "D")
+                    {
+                        l1_stats.cache_write_back++;
+                        l1_dirty_bit.eight_way[l1_field.iBits] = " ";
+                        traffic++;
+                    }
+
+                    traffic++;
+                    l1_way.eight_way[l1_field.iBits] = l1_field.tBits;
+                    l1_stats.cache_write++;
+                    l1_dirty_bit.eight_way[l1_field.iBits] = "D";
+                    l1_lru.eight_way[l1_field.iBits] = count;
+                }
+            }
+        }
+    }
+}
